@@ -47,6 +47,12 @@ describe "Supernova::ThinkingSphinxCriteria" do
       }
     end
     
+    it "uses the crc32 value of strings when used in with" do
+      scope.with(:a => Offer).to_params.at(1)[:with].should == {
+        :a => 3893864506, # crc32 of Offer string
+      }
+    end
+    
     it "sets the correct geo option filter" do
       scope.near(53.5748, 10.0347).within(5.kms).to_params.at(1)[:geo].map(&:to_s).should == ["0.935056656097458", "0.175138554449875"]
     end
@@ -67,6 +73,17 @@ describe "Supernova::ThinkingSphinxCriteria" do
       it "sets pagination pagination #{key} to #{value}" do
         scope.paginate(key => value).to_params.at(1)[key].should == value
       end
+    end
+  end
+  
+  describe "#normalize_with_filter" do
+    it "does not change booleans and integers" do
+      range = 1..10
+      scope.normalize_with_filter(:a => 1, :enabled => true, :range => range).should == { :a => 1, :enabled => true, :range => range }
+    end
+    
+    it "uses crc32 of strings" do
+      scope.normalize_with_filter(:a => "Test").should == { :a => 2018365746 } # crc32 of "Test"
     end
   end
   

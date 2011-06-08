@@ -1,9 +1,17 @@
 require "thinking_sphinx"
+require "zlib"
 
 class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
   def self.index_statement_for(field_name, column = nil)
     column ||= field_name
     [%(CONCAT("#{field_name}_", #{column})), { :as => :"indexed_#{field_name}" }]
+  end
+  
+  def normalize_with_filter(attributes)
+    attributes.inject({}) do |hash, (key, value)|
+      value = Zlib.crc32(value.to_s) if value.is_a?(String) || value.is_a?(Class)
+      hash.merge!(key => value)
+    end
   end
   
   def to_params
@@ -15,7 +23,7 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
     sphinx_options.merge!(self.options[:pagination]) if self.options[:pagination].is_a?(Hash)
     sphinx_options[:classes] = self.filters[:classes] if self.filters[:classes]
     sphinx_options[:conditions].merge!(self.filters[:conditions]) if self.filters[:conditions]
-    sphinx_options[:with].merge!(self.filters[:with]) if self.filters[:with]
+    sphinx_options[:with].merge!(normalize_with_filter(self.filters[:with])) if self.filters[:with]
     
     if self.options[:geo_center] && self.options[:geo_distance]
       sphinx_options[:geo] = [self.options[:geo_center][:lat].to_radians, self.options[:geo_center][:lng].to_radians]
