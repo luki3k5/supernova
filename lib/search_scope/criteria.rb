@@ -1,5 +1,5 @@
 class SearchScope::Criteria
-  attr_accessor :filters, :options
+  attr_accessor :filters, :options, :clazz
 
   class << self
     def method_missing(*args)
@@ -16,7 +16,8 @@ class SearchScope::Criteria
     end
   end
 
-  def initialize
+  def initialize(clazz = nil)
+    self.clazz = clazz
     self.filters = {}
     self.options = {}
   end

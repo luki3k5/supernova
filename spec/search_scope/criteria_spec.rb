@@ -3,9 +3,17 @@ require File.expand_path("../spec_helper", File.dirname(__FILE__))
 describe "SearchScope::Criteria" do
   let(:scope) { SearchScope::Criteria.new }
   
-  it "can be initialized" do
-    SearchScope::Criteria.new.should be_an_instance_of(SearchScope::Criteria)
+  
+  describe "#initialize" do
+    it "can be initialized" do
+      SearchScope::Criteria.new.should be_an_instance_of(SearchScope::Criteria)
+    end
+    
+    it "sets the clazz_name" do
+      SearchScope::Criteria.new(Offer).clazz.should == Offer
+    end
   end
+  
   
   [
     [:order, "popularity desc"],
