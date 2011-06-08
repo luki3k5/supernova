@@ -40,8 +40,22 @@ describe "Supernova::ThinkingSphinxCriteria" do
       scope.select(%w(id title name)).to_params.at(1)[:select].should == %w(id title name)
     end
     
+    it "sets the correct with filters" do
+      scope.with(:a => 1).with(:b => 2).to_params.at(1)[:with].should == {
+        :a => 1,
+        :b => 2
+      }
+    end
+    
     it "sets the correct geo option filter" do
       scope.near(53.5748, 10.0347).within(5.kms).to_params.at(1)[:geo].map(&:to_s).should == ["0.935056656097458", "0.175138554449875"]
+    end
+    
+    it "merges correct with options" do
+      scope.near(53.5748, 10.0347).within(5.kms).with(:filter => true).to_params.at(1)[:with].should == {
+        "@geodist" => 5_000.0,
+        :filter => true
+      }
     end
     
     it "sets the correct geo distance filter" do

@@ -15,6 +15,7 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
     sphinx_options.merge!(self.options[:pagination]) if self.options[:pagination].is_a?(Hash)
     sphinx_options[:classes] = self.filters[:classes] if self.filters[:classes]
     sphinx_options[:conditions].merge!(self.filters[:conditions]) if self.filters[:conditions]
+    sphinx_options[:with].merge!(self.filters[:with]) if self.filters[:with]
     
     if self.options[:geo_center] && self.options[:geo_distance]
       sphinx_options[:geo] = [self.options[:geo_center][:lat].to_radians, self.options[:geo_center][:lng].to_radians]
