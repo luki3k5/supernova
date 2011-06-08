@@ -21,6 +21,11 @@ ActiveRecord::Base.establish_connection(
   :encoding => "utf8"
 )
 
+PROJECT_ROOT = Pathname.new(File.expand_path("..", File.dirname(__FILE__)))
+FileUtils.mkdir_p(PROJECT_ROOT.join("db/sphinx/development"))
+FileUtils.mkdir_p(PROJECT_ROOT.join("log"))
+FileUtils.mkdir_p(PROJECT_ROOT.join("config"))
+
 ThinkingSphinx::ActiveRecord::LogSubscriber.logger = Logger.new(
   open(File.expand_path("../log/active_record.log", File.dirname(__FILE__)), "a")
 )

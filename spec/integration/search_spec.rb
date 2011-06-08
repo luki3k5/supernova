@@ -8,10 +8,10 @@ describe "Search" do
   let(:ts) { ThinkingSphinx::Configuration.instance }
   
   before(:each) do
-    FileUtils.mkdir_p ts.searchd_file_path
     ts.build
     ts.controller.index
     ts.controller.start
+    
     
     ThinkingSphinx.deltas_enabled = true
     ThinkingSphinx.updates_enabled = true
