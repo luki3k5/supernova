@@ -1,6 +1,11 @@
 require "rsolr"
 
 module Supernova
+  KM_TO_METER = 1000.0
+  MILE_TO_METER = 1609.3472
+  DEG_TO_RADIAN = Math::PI / 180.0
+  RADIAN_TO_REG = 1 / DEG_TO_RADIAN
+  
   module ClassMethods
     attr_accessor :criteria_class, :defined_named_search_scopes
     

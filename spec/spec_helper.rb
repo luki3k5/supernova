@@ -6,6 +6,7 @@ require "mysql2"
 require "logger"
 require "fileutils"
 require "ruby-debug"
+require "geokit"
 
 if defined?(Debugger) && Debugger.respond_to?(:settings)
   Debugger.settings[:autolist] = 1

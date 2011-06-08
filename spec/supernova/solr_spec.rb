@@ -35,4 +35,11 @@ describe Supernova::Solr do
       Supernova::Solr.connection.should == con
     end
   end
+  
+  describe "truncate!" do
+    it "calls delete_by_query on connection" do
+      Supernova::Solr.connection.should_receive(:delete_by_query).with("*:*")
+      Supernova::Solr.truncate!
+    end
+  end
 end

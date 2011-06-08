@@ -2,6 +2,11 @@ require 'spec_helper'
 
 describe Supernova::SolrCriteria do
   let(:criteria) { Supernova::SolrCriteria.new }
+  let(:rsolr) { double("rsolr").as_null_object }
+  
+  before(:each) do
+    Supernova::Solr.stub!(:connection).and_return rsolr
+  end
   
   describe "#to_params" do
     it "returns a Hash" do
@@ -9,7 +14,7 @@ describe Supernova::SolrCriteria do
     end
     
     it "sets the correct filters" do
-      criteria.with(:title => "Hans Maulwurf", :playings => 10).to_params[:fq].should == { :title => "Hans Maulwurf", :playings => 10 }
+      criteria.with(:title => "Hans Maulwurf", :playings => 10).to_params[:fq].should == ["title:Hans Maulwurf", "playings:10"]
     end
     
     it "allways includes some query" do
@@ -25,11 +30,11 @@ describe Supernova::SolrCriteria do
     end
     
     it "adds a filter on type when clazz set" do
-      Supernova::SolrCriteria.new(Offer).to_params[:fq].should == { :type => "Offer" }
+      Supernova::SolrCriteria.new(Offer).to_params[:fq].should == ["type:#{Offer}"]
     end
     
     it "does not add a filter on type when clazz is nil" do
-      criteria.to_params[:fq].should == {}
+      criteria.to_params[:fq].should == []
     end
     
     describe "with a nearby search" do
@@ -40,7 +45,7 @@ describe Supernova::SolrCriteria do
       end
       
       it "sets the correct distance" do
-        nearby_criteria.to_params[:d].should == 10000.0
+        nearby_criteria.to_params[:d].should == 10.0
       end
       
       it "sets the sfield to location" do
@@ -48,7 +53,7 @@ describe Supernova::SolrCriteria do
       end
       
       it "sets the fq field to {!geofilt}" do
-        nearby_criteria.to_params[:fq].should == "{!geofilt}"
+        nearby_criteria.to_params[:fq].should == ["{!geofilt}"]
       end
     end
     
@@ -72,9 +77,20 @@ describe Supernova::SolrCriteria do
   end
 
   describe "#to_a" do
-    it "calls calls to_params" do
-      params = double("params")
+    let(:params) { double("params") }
+    
+    before(:each) do
+      criteria.stub(:to_params).and_return params
+    end
+    
+    it "calls to_params" do
       criteria.should_receive(:to_params).and_return params
+      criteria.to_a
+    end
+    
+    # response = Supernova.connection.get("select", :params => to_solr_query)
+    it "calls get with select and params" do
+      rsolr.should_receive(:get).with("select", :params => params).and_return []
       criteria.to_a
     end
   end
