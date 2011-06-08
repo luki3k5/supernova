@@ -9,6 +9,7 @@ source "http://rubygems.org"
 gem "thinking-sphinx", "2.0.3"
 
 group :development do
+  gem "mysql2", "~> 0.2.7"
   gem "autotest"
   gem "autotest-growl"
   gem "rspec", "~> 2.3.0"

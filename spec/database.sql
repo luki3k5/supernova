@@ -1,0 +1,1 @@
+create database supernova_test character set utf8;
