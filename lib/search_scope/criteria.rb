@@ -39,7 +39,7 @@ class SearchScope::Criteria
   end
 
   def search(query)
-    merge_filters :query, query
+    merge_filters :search, query
   end
 
   def with(filters)
@@ -87,12 +87,28 @@ class SearchScope::Criteria
   def implement_in_subclass
     raise "implement in subclass"
   end
+  
+  def merge(other_criteria)
+    other_criteria.filters.each do |key, value|
+      self.merge_filters(key, value)
+    end
+    other_criteria.options.each do |key, value|
+      self.merge_options(key, value)
+    end
+    self
+  end
 
   def method_missing(*args, &block)
     if args.length == 1 && Array.new.respond_to?(args.first)
       to_a.send(args.first, &block)
+    elsif self.named_scope_defined?(args.first)
+      self.merge(self.clazz.send(*args)) # merge named scope and current criteria
     else
       super
     end
+  end
+  
+  def named_scope_defined?(name)
+    self.clazz && self.clazz.respond_to?(:defined_named_search_scopes) && clazz.defined_named_search_scopes.respond_to?(:include?) && clazz.defined_named_search_scopes.include?(name)
   end
 end
