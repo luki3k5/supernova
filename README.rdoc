@@ -1,12 +1,12 @@
-= search_scopes
+= supernova
 
 == Setup
 
-require "search_scope"
-require "search_scope/thiking_sphinx"
+require "supernova"
+require "supernova/thiking_sphinx"
 
 class class Offer
-  include SearchScope::ThinkingSphinx
+  include Supernova::ThinkingSphinx
 end
 
 === Anonymous Scopes
@@ -24,7 +24,7 @@ scope.first or scope.last                                         # all objects 
 === Named Scopes
 
 class Offer
-  include SearchScope::ThinkingSphinx
+  include Supernova::ThinkingSphinx
   
   named_search_scope :popular do
     order("popularity desc")

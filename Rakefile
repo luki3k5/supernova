@@ -14,8 +14,8 @@ require 'rake'
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "search_scope"
-  gem.homepage = "http://github.com/dynport/search_scope"
+  gem.name = "supernova"
+  gem.homepage = "http://github.com/dynport/supernova"
   gem.license = "MIT"
   gem.summary = %Q{Unified search scopes}
   gem.description = %Q{Unified search scopes}

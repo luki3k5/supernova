@@ -1,16 +1,16 @@
 require File.expand_path("../spec_helper", File.dirname(__FILE__))
 
-describe "SearchScope::Criteria" do
-  let(:scope) { SearchScope::Criteria.new }
+describe "Supernova::Criteria" do
+  let(:scope) { Supernova::Criteria.new }
   
   
   describe "#initialize" do
     it "can be initialized" do
-      SearchScope::Criteria.new.should be_an_instance_of(SearchScope::Criteria)
+      Supernova::Criteria.new.should be_an_instance_of(Supernova::Criteria)
     end
     
     it "sets the clazz_name" do
-      SearchScope::Criteria.new(Offer).clazz.should == Offer
+      Supernova::Criteria.new(Offer).clazz.should == Offer
     end
   end
   
@@ -29,10 +29,10 @@ describe "SearchScope::Criteria" do
     end
     
     it "delegates all methods to the instance when responding to" do
-      scope_double = SearchScope::Criteria.new
-      SearchScope::Criteria.should_receive(:new).and_return scope_double
+      scope_double = Supernova::Criteria.new
+      Supernova::Criteria.should_receive(:new).and_return scope_double
       scope_double.should_receive(args.first).with(*args[1..-1])
-      SearchScope::Criteria.send(*args)
+      Supernova::Criteria.send(*args)
     end
   end
   
@@ -147,14 +147,14 @@ describe "SearchScope::Criteria" do
     
     it "does not call named scopes when named_scope_defined? returns false" do
       clazz = double("clazz")
-      scope = SearchScope::Criteria.new(clazz)
+      scope = Supernova::Criteria.new(clazz)
       scope.stub(:named_scope_defined?).and_return false
       clazz.should_not_receive(:rgne)
     end
     
     it "it calls merge with self and returned scope" do
       clazz = double("clazz")
-      scope = SearchScope::Criteria.new(clazz)
+      scope = Supernova::Criteria.new(clazz)
       scope.stub(:named_scope_defined?).and_return true
       rge_scope = double("rgne_scope")
       scope_ret = double("ret")
@@ -166,8 +166,8 @@ describe "SearchScope::Criteria" do
   end
   
   describe "#merge" do
-    let(:criteria) { SearchScope::Criteria.new.order("popularity asc").with(:a => 1).conditions(:b => 2).search("New Search") }
-    let(:new_crit) { SearchScope::Criteria.new.order("popularity desc").with(:c => 8).conditions(:e => 9).search("Search") }
+    let(:criteria) { Supernova::Criteria.new.order("popularity asc").with(:a => 1).conditions(:b => 2).search("New Search") }
+    let(:new_crit) { Supernova::Criteria.new.order("popularity desc").with(:c => 8).conditions(:e => 9).search("Search") }
     
     it "it returns the original criteria" do
       new_crit.merge(criteria).should == new_crit
@@ -208,11 +208,11 @@ describe "SearchScope::Criteria" do
   
   describe "#named_scope_defined?" do
     it "returns false when clazz is nil" do
-      SearchScope::Criteria.new.should_not be_named_scope_defined(:rgne)
+      Supernova::Criteria.new.should_not be_named_scope_defined(:rgne)
     end
     
     it "returns false when clazz is present but not responding to defined_search_scopes" do
-      SearchScope::Criteria.new("test").should_not be_named_scope_defined(:rgne)
+      Supernova::Criteria.new("test").should_not be_named_scope_defined(:rgne)
     end
     
     it "returns false when clazz is responding to defined_search_scopes but empty" do
@@ -221,7 +221,7 @@ describe "SearchScope::Criteria" do
         attr_accessor :defined_named_search_scopes
       end
       clazz.defined_named_search_scopes = nil
-      SearchScope::Criteria.new(clazz).should_not be_named_scope_defined(:rgne)
+      Supernova::Criteria.new(clazz).should_not be_named_scope_defined(:rgne)
     end
     
     it "returns false when clazz is responding to defined_search_scopes but not included" do
@@ -230,7 +230,7 @@ describe "SearchScope::Criteria" do
         attr_accessor :defined_named_search_scopes
       end
       clazz.defined_named_search_scopes = [:some_other]
-      SearchScope::Criteria.new(clazz).should_not be_named_scope_defined(:rgne)
+      Supernova::Criteria.new(clazz).should_not be_named_scope_defined(:rgne)
     end
     
     it "returns true when clazz is responding to defined_search_scopes and included" do
@@ -239,7 +239,7 @@ describe "SearchScope::Criteria" do
         attr_accessor :defined_named_search_scopes
       end
       clazz.defined_named_search_scopes = [:rgne]
-      SearchScope::Criteria.new(clazz).should be_named_scope_defined(:rgne)
+      Supernova::Criteria.new(clazz).should be_named_scope_defined(:rgne)
     end
   end
 end

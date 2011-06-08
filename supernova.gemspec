@@ -4,7 +4,7 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{search_scope}
+  s.name = %q{supernova}
   s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
@@ -24,17 +24,19 @@ Gem::Specification.new do |s|
     "LICENSE.txt",
     "README.rdoc",
     "Rakefile",
+    "VERSION",
     "autotest/discover.rb",
-    "lib/search_scope.rb",
-    "lib/search_scope/criteria.rb",
-    "lib/search_scope/thinking_sphinx.rb",
-    "lib/search_scope/thinking_sphinx_criteria.rb",
-    "spec/search_scope/criteria_spec.rb",
-    "spec/search_scope/thinking_sphinx_criteria_spec.rb",
-    "spec/search_scope_spec.rb",
-    "spec/spec_helper.rb"
+    "lib/supernova.rb",
+    "lib/supernova/criteria.rb",
+    "lib/supernova/thinking_sphinx.rb",
+    "lib/supernova/thinking_sphinx_criteria.rb",
+    "spec/spec_helper.rb",
+    "spec/supernova/criteria_spec.rb",
+    "spec/supernova/thinking_sphinx_criteria_spec.rb",
+    "spec/supernova_spec.rb",
+    "supernova.gemspec"
   ]
-  s.homepage = %q{http://github.com/dynport/search_scope}
+  s.homepage = %q{http://github.com/dynport/supernova}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.7.2}

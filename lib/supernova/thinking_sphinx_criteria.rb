@@ -1,6 +1,6 @@
 require "thinking_sphinx"
 
-class SearchScope::ThinkingSphinxCriteria < SearchScope::Criteria
+class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
   def self.index_statement_for(field_name, column = nil)
     column ||= field_name
     [%(CONCAT("#{field_name}_", #{column})), { :as => :"indexed_#{field_name}" }]

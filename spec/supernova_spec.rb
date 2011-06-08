@@ -1,25 +1,25 @@
 require 'spec_helper'
 
-describe SearchScope do
+describe Supernova do
   let(:clazz) do
     clazz = Class.new
-    clazz.send(:include, SearchScope::ThinkingSphinx)
+    clazz.send(:include, Supernova::ThinkingSphinx)
   end
   
   describe "#including" do
     it "can be includes" do
-      Class.new.send(:include, SearchScope::ThinkingSphinx)
+      Class.new.send(:include, Supernova::ThinkingSphinx)
     end
 
     it "defines a named_search_scope method" do
-      clazz.send(:include, SearchScope)
+      clazz.send(:include, Supernova)
       clazz.should be_respond_to(:named_search_scope)
     end
   end
   
   describe "#search_scope" do
     it "returns a new criteria" do
-      clazz.search_scope.should be_an_instance_of(SearchScope::ThinkingSphinxCriteria)
+      clazz.search_scope.should be_an_instance_of(Supernova::ThinkingSphinxCriteria)
     end
     
     it "sets the correct clazz" do
@@ -40,7 +40,7 @@ describe SearchScope do
       end
 
       it "returns a new criteria" do
-        clazz.popular.should be_an_instance_of(SearchScope::ThinkingSphinxCriteria)
+        clazz.popular.should be_an_instance_of(Supernova::ThinkingSphinxCriteria)
       end
 
       it "sets the clazz attribute" do
@@ -58,11 +58,11 @@ describe SearchScope do
     
     describe "chaining" do
       it "calls merge with both scopes" do
-        scope = SearchScope::ThinkingSphinxCriteria.new(clazz)
-        scope.should_receive(:merge).with(instance_of(SearchScope::ThinkingSphinxCriteria))
+        scope = Supernova::ThinkingSphinxCriteria.new(clazz)
+        scope.should_receive(:merge).with(instance_of(Supernova::ThinkingSphinxCriteria))
         scope.popular
       end
-      # SearchScope::ThinkingSphinxCriteria.new(clazz).popular.should be_an_instance_of()
+      # Supernova::ThinkingSphinxCriteria.new(clazz).popular.should be_an_instance_of()
     end
     
     describe "with parameters" do

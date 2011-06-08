@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe "SearchScope::ThinkingSphinxCriteria" do
-  let(:scope) { SearchScope::ThinkingSphinxCriteria.new }
+describe "Supernova::ThinkingSphinxCriteria" do
+  let(:scope) { Supernova::ThinkingSphinxCriteria.new }
   
   describe "#to_params" do
     it "returns an array" do

@@ -1,4 +1,4 @@
-class SearchScope::Criteria
+class Supernova::Criteria
   attr_accessor :filters, :options, :clazz
 
   class << self

@@ -1,4 +1,4 @@
-module SearchScope
+module Supernova
   module ClassMethods
     attr_accessor :criteria_class, :defined_named_search_scopes
     
@@ -16,5 +16,5 @@ module SearchScope
   end
 end
 
-require "search_scope/criteria"
-require "search_scope/thinking_sphinx"
+require "supernova/criteria"
+require "supernova/thinking_sphinx"
