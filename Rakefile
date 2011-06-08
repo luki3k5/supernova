@@ -17,8 +17,8 @@ Jeweler::Tasks.new do |gem|
   gem.name = "search_scope"
   gem.homepage = "http://github.com/dynport/search_scope"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{Unified search scopes}
+  gem.description = %Q{Unified search scopes}
   gem.email = "tobias.schwab@dynport.de"
   gem.authors = ["Tobias Schwab"]
   # dependencies defined in Gemfile

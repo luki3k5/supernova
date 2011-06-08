@@ -1,6 +1,6 @@
 require "thinking_sphinx"
 
-class SphinxScope < SearchScope
+class SearchScope::SphinxCriteria < SearchScope::Criteria
   def self.index_statement_for(field_name, column = nil)
     column ||= field_name
     [%(CONCAT("#{field_name}_", #{column})), { :as => :"indexed_#{field_name}" }]
@@ -16,7 +16,6 @@ class SphinxScope < SearchScope
     sphinx_options.merge!(self.options[:pagination]) if self.options[:pagination].is_a?(Hash)
     sphinx_options[:classes] = self.filters[:classes] if self.filters[:classes]
     sphinx_options[:conditions].merge!(self.filters[:conditions]) if self.filters[:conditions]
-    
     [self.filters[:query], sphinx_options]
   end
   

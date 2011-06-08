@@ -1,16 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-class Offer
-end
-
-class Host
-end
-
-describe "SearchScope" do
-  let(:scope) { SearchScope.new }
+describe "SearchScope::Criteria" do
+  let(:scope) { SearchScope::Criteria.new }
   
   it "can be initialized" do
-    SearchScope.new.should be_an_instance_of(SearchScope)
+    SearchScope::Criteria.new.should be_an_instance_of(SearchScope::Criteria)
   end
   
   [
@@ -28,10 +22,10 @@ describe "SearchScope" do
     end
     
     it "delegates all methods to the instance when responding to" do
-      scope_double = SearchScope.new
-      SearchScope.should_receive(:new).and_return scope_double
+      scope_double = SearchScope::Criteria.new
+      SearchScope::Criteria.should_receive(:new).and_return scope_double
       scope_double.should_receive(args.first).with(*args[1..-1])
-      SearchScope.send(*args)
+      SearchScope::Criteria.send(*args)
     end
   end
   
@@ -131,4 +125,5 @@ describe "SearchScope" do
       
     end
   end
+  
 end
