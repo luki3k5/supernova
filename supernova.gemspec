@@ -36,7 +36,6 @@ Gem::Specification.new do |s|
     "spec/supernova_spec.rb",
     "supernova.gemspec"
   ]
-  s.homepage = %q{http://github.com/dynport/supernova}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.7.2}
