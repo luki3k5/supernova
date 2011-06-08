@@ -2,41 +2,41 @@
 
 == Setup
 
-require "supernova"
-require "supernova/thiking_sphinx"
-
-class class Offer
-  include Supernova::ThinkingSphinx
-end
+  require "supernova"
+  require "supernova/thinking_sphinx"
+  
+  class Offer
+    include Supernova::ThinkingSphinx
+  end
 
 === Anonymous Scopes
 
-scope = Offer.order("popularity desc").with(:city => "Hamburg").paginate(:page => 2, :per_page => 10)
-
-# no query sent yet
-# query is sent e.g. when
-
-scope.each { |offer| puts offer.city }                            # objects of current page are iterated
-scope.total_entries                                               # no objects loaded though
-scope.ids                                                         # no objects loaded, only ids are returned
-scope.first or scope.last                                         # all objects are loaded, only first or last in "page" is returned
+  scope = Offer.order("popularity desc").with(:city => "Hamburg").paginate(:page => 2, :per_page => 10)
+  
+  # no query sent yet
+  # query is sent e.g. when
+  
+  scope.each { |offer| puts offer.city }                            # objects of current page are iterated
+  scope.total_entries                                               # no objects loaded though
+  scope.ids                                                         # no objects loaded, only ids are returned
+  scope.first or scope.last                                         # all objects are loaded, only first or last in "page" is returned
 
 === Named Scopes
 
-class Offer
-  include Supernova::ThinkingSphinx
-  
-  named_search_scope :popular do
-    order("popularity desc")
+  class Offer
+    include Supernova::ThinkingSphinx
+    
+    named_search_scope :popular do
+      order("popularity desc")
+    end
+    
+    named_search_scope :for_artists do |ids|
+      with(:artist_id => ids)
+    end
   end
   
-  named_search_scope :for_artists do |ids|
-    with(:artist_id => ids)
-  end
-end
-
-Offer.popular.for_artists([1, 2, 3])                              # various named scopes can be combined
-Offer.popular.for_artists([1, 2, 3]).with(:available => true)     # named scopes can also be combined with anonymous scopes
+  Offer.popular.for_artists([1, 2, 3])                              # various named scopes can be combined
+  Offer.popular.for_artists([1, 2, 3]).with(:available => true)     # named scopes can also be combined with anonymous scopes
 
 == Contributing to search_scopes
  
@@ -50,6 +50,6 @@ Offer.popular.for_artists([1, 2, 3]).with(:available => true)     # named scopes
 
 == Copyright
 
-Copyright (c) 2011 Tobias Schwab. See LICENSE.txt for
+Copyright (c) 2011 Dynport GmbH. See LICENSE.txt for
 further details.
 
