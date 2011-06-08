@@ -16,5 +16,6 @@ module Supernova
   end
 end
 
+require "supernova/numeric_extensions"
 require "supernova/criteria"
 require "supernova/thinking_sphinx"

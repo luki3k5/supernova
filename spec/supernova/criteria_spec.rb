@@ -1,4 +1,5 @@
 require File.expand_path("../spec_helper", File.dirname(__FILE__))
+require "ostruct"
 
 describe "Supernova::Criteria" do
   let(:scope) { Supernova::Criteria.new }
@@ -22,7 +23,9 @@ describe "Supernova::Criteria" do
     [:with, { :stars => 2 }],
     [:conditions, { :stars => 2 }],
     [:paginate, { :stars => 2 }],
-    [:select, %w(stars)]
+    [:select, %w(stars)],
+    [:near, "test"],
+    [:within, 10]
   ].each do |args|
     it "returns the scope itself for #{args.first}" do
       scope.send(*args).should == scope
@@ -203,6 +206,36 @@ describe "Supernova::Criteria" do
       new_crit.should_receive(:merge_filters).with(:a, 1)
       new_crit.should_receive(:merge_filters).with(:c, 3)
       new_crit.merge(criteria)
+    end
+  end
+  
+  describe "#near" do
+    it "sets the geo_center option" do
+      scope.near([47, 11]).options[:geo_center].should == { :lat => 47.0, :lng => 11.0 }
+    end
+    
+    it "can be called without an array" do
+      scope.near(47, 11).options[:geo_center].should == { :lat => 47.0, :lng => 11.0 }
+    end
+  end
+  
+  describe "#within" do
+    it "sets the distance to a value in meters when numeric given" do
+      scope.within("test").options[:geo_distance].should == "test"
+    end
+  end
+  
+  describe "normalize_coordinates" do
+    it "returns a hash when array given" do
+      scope.normalize_coordinates([47, 12]).should == { :lat => 47.0, :lng => 12.0 }
+    end
+    
+    it "returns a hash when two parameters given" do
+      scope.normalize_coordinates(47, 12).should == { :lat => 47.0, :lng => 12.0 }
+    end
+    
+    it "returns a hash when object responding to lat and lng is given" do
+      scope.normalize_coordinates(OpenStruct.new(:lat => 11, :lng => 19)).should == { :lat => 11.0, :lng => 19.0 }
     end
   end
   

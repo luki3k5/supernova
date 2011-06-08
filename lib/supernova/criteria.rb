@@ -57,6 +57,23 @@ class Supernova::Criteria
   def paginate(options)
     merge_options :pagination, options
   end
+  
+  def near(*coordinates)
+    merge_options :geo_center, normalize_coordinates(*coordinates)
+  end
+  
+  def within(distance)
+    merge_options :geo_distance, distance
+  end
+  
+  def normalize_coordinates(*args)
+    flattened = args.flatten
+    if flattened.length == 1 && flattened.first.respond_to?(:lat) && flattened.first.respond_to?(:lng)
+      { :lat => flattened.first.lat.to_f, :lng => flattened.first.lng.to_f }
+    elsif flattened.length == 2
+      { :lat => flattened.first.to_f, :lng => flattened.at(1).to_f }
+    end
+  end
 
   def merge_filters(key, value)
     merge_filters_or_options(self.filters, key, value)

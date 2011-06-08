@@ -40,6 +40,15 @@ describe "Supernova::ThinkingSphinxCriteria" do
       scope.select(%w(id title name)).to_params.at(1)[:select].should == %w(id title name)
     end
     
+    it "sets the correct geo option filter" do
+      scope.near(53.5748, 10.0347).within(5.kms).to_params.at(1)[:geo].map(&:to_s).should == ["0.935056656097458", "0.175138554449875"]
+    end
+    
+    it "sets the correct geo distance filter" do
+      # @geodist
+      scope.near(53.5748, 10.0347).within(7.kms).to_params.at(1)[:with]["@geodist"].should == 7_000.0
+    end
+    
     { :page => 8, :per_page => 1 }.each do |key, value|
       it "sets pagination pagination #{key} to #{value}" do
         scope.paginate(key => value).to_params.at(1)[key].should == value
