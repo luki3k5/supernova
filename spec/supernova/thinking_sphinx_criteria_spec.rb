@@ -74,6 +74,10 @@ describe "Supernova::ThinkingSphinxCriteria" do
         scope.paginate(key => value).to_params.at(1)[key].should == value
       end
     end
+    
+    it "adds custom options to the sphinx search" do
+      scope.options(:star => true).to_params.at(1)[:star].should == true
+    end
   end
   
   describe "#normalize_with_filter" do

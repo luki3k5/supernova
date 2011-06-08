@@ -1,5 +1,5 @@
 class Supernova::Criteria
-  attr_accessor :filters, :options, :clazz
+  attr_accessor :filters, :search_options, :clazz
 
   class << self
     def method_missing(*args)
@@ -19,7 +19,7 @@ class Supernova::Criteria
   def initialize(clazz = nil)
     self.clazz = clazz
     self.filters = {}
-    self.options = {}
+    self.search_options = {}
   end
 
   def for_classes(clazzes)
@@ -27,15 +27,15 @@ class Supernova::Criteria
   end
 
   def order(order_option)
-    merge_options :order, order_option
+    merge_search_options :order, order_option
   end
 
   def limit(limit_option)
-    merge_options :limit, limit_option
+    merge_search_options :limit, limit_option
   end
 
   def group_by(group_option)
-    merge_options :group_by, group_option
+    merge_search_options :group_by, group_option
   end
 
   def search(query)
@@ -47,23 +47,27 @@ class Supernova::Criteria
   end
 
   def select(fields)
-    merge_options :select, fields
+    merge_search_options :select, fields
   end
 
   def conditions(filters)
     merge_filters :conditions, filters
   end
 
-  def paginate(options)
-    merge_options :pagination, options
+  def paginate(pagination_options)
+    merge_search_options :pagination, pagination_options
   end
   
   def near(*coordinates)
-    merge_options :geo_center, normalize_coordinates(*coordinates)
+    merge_search_options :geo_center, normalize_coordinates(*coordinates)
   end
   
   def within(distance)
-    merge_options :geo_distance, distance
+    merge_search_options :geo_distance, distance
+  end
+  
+  def options(options_hash)
+    merge_search_options :custom_options, options_hash
   end
   
   def normalize_coordinates(*args)
@@ -76,14 +80,14 @@ class Supernova::Criteria
   end
 
   def merge_filters(key, value)
-    merge_filters_or_options(self.filters, key, value)
+    merge_filters_or_search_options(self.filters, key, value)
   end
 
-  def merge_options(key, value)
-    merge_filters_or_options(self.options, key, value)
+  def merge_search_options(key, value)
+    merge_filters_or_search_options(self.search_options, key, value)
   end
 
-  def merge_filters_or_options(reference, key, value)
+  def merge_filters_or_search_options(reference, key, value)
     if value.is_a?(Hash)
       reference[key] ||= Hash.new
       reference[key].merge!(value)
@@ -109,8 +113,8 @@ class Supernova::Criteria
     other_criteria.filters.each do |key, value|
       self.merge_filters(key, value)
     end
-    other_criteria.options.each do |key, value|
-      self.merge_options(key, value)
+    other_criteria.search_options.each do |key, value|
+      self.merge_search_options(key, value)
     end
     self
   end

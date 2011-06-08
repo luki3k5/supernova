@@ -48,7 +48,7 @@ describe Supernova do
       end
 
       it "sets the correct order option" do
-        clazz.popular.options[:order].should == "popularity desc"
+        clazz.popular.search_options[:order].should == "popularity desc"
       end
       
       it "adds the name of the scope to the defined_named_search_scopes array" do
@@ -80,7 +80,7 @@ describe Supernova do
       end
       
       it "allows chaining of named_search_scopes" do
-        clazz.for_artists(%w(1 3 2)).popular.options[:order].should == "popularity desc"
+        clazz.for_artists(%w(1 3 2)).popular.search_options[:order].should == "popularity desc"
       end
     end
   end

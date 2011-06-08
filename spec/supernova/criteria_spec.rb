@@ -25,7 +25,8 @@ describe "Supernova::Criteria" do
     [:paginate, { :stars => 2 }],
     [:select, %w(stars)],
     [:near, "test"],
-    [:within, 10]
+    [:within, 10],
+    [:options, {}]
   ].each do |args|
     it "returns the scope itself for #{args.first}" do
       scope.send(*args).should == scope
@@ -41,18 +42,18 @@ describe "Supernova::Criteria" do
   
   describe "#order" do
     it "sets the order statement" do
-      scope.order("popularity desc").options[:order].should == "popularity desc"
+      scope.order("popularity desc").search_options[:order].should == "popularity desc"
     end
   end
   
   describe "#group_by" do
     it "sets the group option" do
-      scope.group_by("name").options[:group_by].should == "name"
+      scope.group_by("name").search_options[:group_by].should == "name"
     end
   end
   
   it "sets the limit option" do
-    scope.limit(77).options[:limit].should == 77
+    scope.limit(77).search_options[:limit].should == 77
   end
   
   describe "#search" do
@@ -84,11 +85,11 @@ describe "Supernova::Criteria" do
   end
   
   it "sets select option" do
-    scope.select(%w(a b)).options[:select].should == %w(a b)
+    scope.select(%w(a b)).search_options[:select].should == %w(a b)
   end
   
   it "sets the correct pagination fields" do
-    scope.paginate(:page => 9, :per_page => 2).options[:pagination].should == { :page => 9, :per_page => 2 }
+    scope.paginate(:page => 9, :per_page => 2).search_options[:pagination].should == { :page => 9, :per_page => 2 }
   end
   
   it "to_parameters raises an implement in subclass error" do
@@ -177,7 +178,7 @@ describe "Supernova::Criteria" do
     end
     
     it "merges e.g. the order" do
-      new_crit.merge(criteria).options[:order].should == "popularity asc"
+      new_crit.merge(criteria).search_options[:order].should == "popularity asc"
     end
     
     it "merges e.g. the with filters" do
@@ -193,10 +194,10 @@ describe "Supernova::Criteria" do
     end
     
     it "calls merge on options" do
-      criteria.stub!(:options).and_return({ :x => 2, :y => 9 })
-      new_crit.stub!(:options).and_return({ :z => 3, :c => 1 })
-      new_crit.should_receive(:merge_options).with(:x, 2)
-      new_crit.should_receive(:merge_options).with(:y, 9)
+      criteria.stub!(:search_options).and_return({ :x => 2, :y => 9 })
+      new_crit.stub!(:search_options).and_return({ :z => 3, :c => 1 })
+      new_crit.should_receive(:merge_search_options).with(:x, 2)
+      new_crit.should_receive(:merge_search_options).with(:y, 9)
       new_crit.merge(criteria)
     end
     
@@ -211,17 +212,23 @@ describe "Supernova::Criteria" do
   
   describe "#near" do
     it "sets the geo_center option" do
-      scope.near([47, 11]).options[:geo_center].should == { :lat => 47.0, :lng => 11.0 }
+      scope.near([47, 11]).search_options[:geo_center].should == { :lat => 47.0, :lng => 11.0 }
     end
     
     it "can be called without an array" do
-      scope.near(47, 11).options[:geo_center].should == { :lat => 47.0, :lng => 11.0 }
+      scope.near(47, 11).search_options[:geo_center].should == { :lat => 47.0, :lng => 11.0 }
     end
   end
   
   describe "#within" do
     it "sets the distance to a value in meters when numeric given" do
-      scope.within("test").options[:geo_distance].should == "test"
+      scope.within("test").search_options[:geo_distance].should == "test"
+    end
+  end
+  
+  describe "#options" do
+    it "merges full hash into options" do
+      scope.order("popularity desc").options(:test => "out", :order => "popularity asc").search_options[:custom_options].should == { :test => "out", :order => "popularity asc" }
     end
   end
   
