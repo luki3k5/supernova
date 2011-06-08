@@ -1,3 +1,5 @@
+require "rsolr"
+
 module Supernova
   module ClassMethods
     attr_accessor :criteria_class, :defined_named_search_scopes
@@ -19,3 +21,4 @@ end
 require "supernova/numeric_extensions"
 require "supernova/criteria"
 require "supernova/thinking_sphinx"
+require "supernova/solr"

@@ -5,7 +5,7 @@ require "mysql2"
 require "fileutils"
 require "geokit"
 
-describe "Search" do
+describe "ThinkingSphinx" do
   let(:ts) { ThinkingSphinx::Configuration.instance }
   
   before(:each) do

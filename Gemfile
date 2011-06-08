@@ -7,6 +7,7 @@ source "http://rubygems.org"
 # Include everything needed to run rake, tests, features, etc.
 
 gem "thinking-sphinx", "2.0.3"
+gem "rsolr"
 
 group :development do
   gem "ruby-debug"
