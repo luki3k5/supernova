@@ -29,7 +29,7 @@ describe SearchScope do
     end
     
     it "returns a new criteria" do
-      clazz.popular.should be_an_instance_of(SearchScope::SphinxCriteria)
+      clazz.popular.should be_an_instance_of(SearchScope::ThinkingSphinxCriteria)
     end
     
     it "sets the clazz attribute" do
