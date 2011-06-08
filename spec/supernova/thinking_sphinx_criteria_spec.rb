@@ -28,6 +28,10 @@ describe "Supernova::ThinkingSphinxCriteria" do
       scope.for_classes(Offer).to_params.at(1)[:classes].should == [Offer]
     end
     
+    it "sets the classes to the clazz when intialized with the class" do
+      Supernova::ThinkingSphinxCriteria.new(Offer).to_params.at(1)[:classes].should == [Offer]
+    end
+    
     it "sets the search query when present" do
       scope.search("some test").to_params.at(0).should == "some test"
     end
@@ -59,14 +63,19 @@ describe "Supernova::ThinkingSphinxCriteria" do
     
     it "merges correct with options" do
       scope.near(53.5748, 10.0347).within(5.kms).with(:filter => true).to_params.at(1)[:with].should == {
-        "@geodist" => 5_000.0,
+        "@geodist" => Range.new(0.0, 5_000.0),
         :filter => true
       }
     end
     
-    it "sets the correct geo distance filter" do
+    it "sets the correct geo distance filter when single value given" do
       # @geodist
-      scope.near(53.5748, 10.0347).within(7.kms).to_params.at(1)[:with]["@geodist"].should == 7_000.0
+      scope.near(53.5748, 10.0347).within(7.kms).to_params.at(1)[:with]["@geodist"].should == Range.new(0.0, 7_000.0)
+    end
+    
+    it "sets the correct geo distance filter when range given value given" do
+      # @geodist
+      scope.near(53.5748, 10.0347).within(7.kms..10.kms).to_params.at(1)[:with]["@geodist"].should == Range.new(7_000.0, 10_000.0)
     end
     
     { :page => 8, :per_page => 1 }.each do |key, value|

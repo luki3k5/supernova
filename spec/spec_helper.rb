@@ -4,6 +4,13 @@ require 'rspec'
 require 'supernova'
 require "mysql2"
 require "logger"
+require "fileutils"
+require "ruby-debug"
+
+if defined?(Debugger) && Debugger.respond_to?(:settings)
+  Debugger.settings[:autolist] = 1
+  Debugger.settings[:autoeval] = true
+end
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
@@ -40,12 +47,13 @@ class Offer < ActiveRecord::Base
   
   define_index do
     indexes text
+    
     has :user_id
     has :enabled
     has :popularity, :sort => true
     
-    has "RADIANS(lat)",  :as => :latitude,  :type => :float
-    has "RADIANS(lng)", :as => :longitude, :type => :float
+    has "RADIANS(lat)",  :as => :lat, :type => :float
+    has "RADIANS(lng)", :as => :lng, :type => :float
   end
   
   named_search_scope :for_user_ids do |*ids|

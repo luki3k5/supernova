@@ -241,8 +241,14 @@ describe "Supernova::Criteria" do
       scope.normalize_coordinates(47, 12).should == { :lat => 47.0, :lng => 12.0 }
     end
     
-    it "returns a hash when object responding to lat and lng is given" do
-      scope.normalize_coordinates(OpenStruct.new(:lat => 11, :lng => 19)).should == { :lat => 11.0, :lng => 19.0 }
+    [
+      [:lat, :lng],
+      [:lat, :lon],
+      [:latitude, :longitude]
+    ].each do |(lat_name, lng_name)|
+      it "returns a hash when object responding to lat and lng is given" do
+        scope.normalize_coordinates(OpenStruct.new(lat_name => 11, lng_name => 19)).should == { :lat => 11.0, :lng => 19.0 }
+      end
     end
   end
   

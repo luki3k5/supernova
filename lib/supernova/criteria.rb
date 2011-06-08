@@ -72,11 +72,18 @@ class Supernova::Criteria
   
   def normalize_coordinates(*args)
     flattened = args.flatten
-    if flattened.length == 1 && flattened.first.respond_to?(:lat) && flattened.first.respond_to?(:lng)
-      { :lat => flattened.first.lat.to_f, :lng => flattened.first.lng.to_f }
+    if (lat = read_first_attribute(flattened.first, :lat, :latitude)) && (lng = read_first_attribute(flattened.first, :lng, :lon, :longitude))
+      { :lat => lat.to_f, :lng => lng.to_f }
     elsif flattened.length == 2
       { :lat => flattened.first.to_f, :lng => flattened.at(1).to_f }
     end
+  end
+  
+  def read_first_attribute(object, *keys)
+    keys.each do |key|
+      return object.send(key) if object.respond_to?(key)
+    end
+    nil
   end
 
   def merge_filters(key, value)

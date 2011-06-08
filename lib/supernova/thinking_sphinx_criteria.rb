@@ -22,12 +22,13 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
     sphinx_options[:group_by] = self.search_options[:group_by] if self.search_options[:group_by]
     sphinx_options.merge!(self.search_options[:pagination]) if self.search_options[:pagination].is_a?(Hash)
     sphinx_options[:classes] = self.filters[:classes] if self.filters[:classes]
+    sphinx_options[:classes] = [self.clazz] if self.clazz
     sphinx_options[:conditions].merge!(self.filters[:conditions]) if self.filters[:conditions]
     sphinx_options[:with].merge!(normalize_with_filter(self.filters[:with])) if self.filters[:with]
     sphinx_options.merge!(self.search_options[:custom_options]) if self.search_options[:custom_options]
     if self.search_options[:geo_center] && self.search_options[:geo_distance]
       sphinx_options[:geo] = [self.search_options[:geo_center][:lat].to_radians, self.search_options[:geo_center][:lng].to_radians]
-      sphinx_options[:with]["@geodist"] = self.search_options[:geo_distance]
+      sphinx_options[:with]["@geodist"] = self.search_options[:geo_distance].is_a?(Range) ? self.search_options[:geo_distance] : Range.new(0.0, self.search_options[:geo_distance])
     end
     [self.filters[:search], sphinx_options]
   end
@@ -37,7 +38,8 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
   end
   
   def ids
-    ThinkingSphinx.search_for_ids(*self.to_params)
+    params = *self.to_params
+    ThinkingSphinx.search_for_ids(*params)
   end
   
   def total_entries

@@ -38,6 +38,11 @@
   Offer.popular.for_artists([1, 2, 3])                              # various named scopes can be combined
   Offer.popular.for_artists([1, 2, 3]).with(:available => true)     # named scopes can also be combined with anonymous scopes
 
+=== Geo Searches
+  Offer.search_scope.near(47.0, 11.0).within(1.kms)
+  Offer.search_scope.near(47.0, 11.0).within(100.meters)
+  Offer.search_scope.near(other_offer).within(100.meters)
+
 == Contributing to search_scopes
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet

@@ -3,6 +3,7 @@ require "active_record"
 require "thinking_sphinx"
 require "mysql2"
 require "fileutils"
+require "geokit"
 
 describe "Search" do
   let(:ts) { ThinkingSphinx::Configuration.instance }
@@ -18,8 +19,10 @@ describe "Search" do
     ThinkingSphinx.suppress_delta_output = true
     
     Offer.connection.execute "TRUNCATE offers"
-    @offer1 = Offer.create!(:id => 1, :user_id => 1, :enabled => false, :text => "Hans Meyer", :popularity => 10)
-    @offer2 = Offer.create!(:id => 2, :user_id => 2, :enabled => true, :text => "Marek Mintal", :popularity => 1)
+    root = Geokit::LatLng.new(47, 11)
+    endpoint = root.endpoint(90, 50, :units => :kms)
+    @offer1 = Offer.create!(:id => 1, :user_id => 1, :enabled => false, :text => "Hans Meyer", :popularity => 10, :lat => root.lat, :lng => root.lng)
+    @offer2 = Offer.create!(:id => 2, :user_id => 2, :enabled => true, :text => "Marek Mintal", :popularity => 1, :lat => endpoint.lat, :lng => endpoint.lng)
     ts.controller.index
     sleep 0.1
   end
@@ -49,5 +52,21 @@ describe "Search" do
   
   it "sorty by popularity" do
     Offer.search_scope.order("popularity desc").map(&:id).should == [1, 2]
+  end
+  
+  describe "geo search" do
+    it "finds the correct offers" do
+      Offer.search_scope.near(47, 11).within(25.kms).to_a.to_a.should == [@offer1]
+    end
+    
+    it "finds more offers when radius is bigger" do
+      Offer.search_scope.near(47, 11).within(49.kms).to_a.should_not include(@offer2)
+      Offer.search_scope.near(47, 11).within(51.kms).to_a.should include(@offer2)
+    end
+    
+    it "finds offers around other offers" do
+      Offer.search_scope.near(@offer1).within(49.kms).to_a.to_a.should == [@offer1]
+      Offer.search_scope.near(@offer1).within(51.kms).order("@geodist desc").to_a.to_a.should == [@offer2, @offer1]
+    end
   end
 end
