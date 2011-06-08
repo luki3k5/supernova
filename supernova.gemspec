@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{supernova}
-  s.version = "0.1.0"
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tobias Schwab"]
@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
     "README.rdoc"
   ]
   s.files = [
+    ".autotest",
     ".document",
     ".rspec",
     "Gemfile",
@@ -28,10 +29,14 @@ Gem::Specification.new do |s|
     "autotest/discover.rb",
     "lib/supernova.rb",
     "lib/supernova/criteria.rb",
+    "lib/supernova/numeric_extensions.rb",
     "lib/supernova/thinking_sphinx.rb",
     "lib/supernova/thinking_sphinx_criteria.rb",
+    "spec/database.sql",
+    "spec/integration/search_spec.rb",
     "spec/spec_helper.rb",
     "spec/supernova/criteria_spec.rb",
+    "spec/supernova/numeric_extensions_spec.rb",
     "spec/supernova/thinking_sphinx_criteria_spec.rb",
     "spec/supernova_spec.rb",
     "supernova.gemspec"
@@ -46,6 +51,9 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
+      s.add_development_dependency(%q<ruby-debug>, [">= 0"])
+      s.add_development_dependency(%q<mysql2>, ["~> 0.2.7"])
+      s.add_development_dependency(%q<geokit>, [">= 0"])
       s.add_development_dependency(%q<autotest>, [">= 0"])
       s.add_development_dependency(%q<autotest-growl>, [">= 0"])
       s.add_development_dependency(%q<rspec>, ["~> 2.3.0"])
@@ -54,6 +62,9 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<rcov>, [">= 0"])
     else
       s.add_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
+      s.add_dependency(%q<ruby-debug>, [">= 0"])
+      s.add_dependency(%q<mysql2>, ["~> 0.2.7"])
+      s.add_dependency(%q<geokit>, [">= 0"])
       s.add_dependency(%q<autotest>, [">= 0"])
       s.add_dependency(%q<autotest-growl>, [">= 0"])
       s.add_dependency(%q<rspec>, ["~> 2.3.0"])
@@ -63,6 +74,9 @@ Gem::Specification.new do |s|
     end
   else
     s.add_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
+    s.add_dependency(%q<ruby-debug>, [">= 0"])
+    s.add_dependency(%q<mysql2>, ["~> 0.2.7"])
+    s.add_dependency(%q<geokit>, [">= 0"])
     s.add_dependency(%q<autotest>, [">= 0"])
     s.add_dependency(%q<autotest-growl>, [">= 0"])
     s.add_dependency(%q<rspec>, ["~> 2.3.0"])
