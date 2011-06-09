@@ -50,6 +50,7 @@ GEM
       activerecord (>= 3.0.3)
       riddle (>= 1.2.2)
     tzinfo (0.3.27)
+    will_paginate (2.3.15)
 
 PLATFORMS
   ruby
@@ -66,3 +67,4 @@ DEPENDENCIES
   rspec (~> 2.3.0)
   ruby-debug
   thinking-sphinx (= 2.0.3)
+  will_paginate

@@ -24,6 +24,7 @@ module Supernova
 end
 
 require "supernova/numeric_extensions"
+require "supernova/collection"
 require "supernova/criteria"
 require "supernova/thinking_sphinx"
 require "supernova/solr"

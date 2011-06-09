@@ -1,4 +1,7 @@
 class Supernova::Criteria
+  DEFAULT_PER_PAGE = 25
+  FIRST_PAGE = 1
+  
   attr_accessor :filters, :search_options, :clazz
 
   class << self
@@ -110,6 +113,18 @@ class Supernova::Criteria
 
   def to_a
     implement_in_subclass
+  end
+  
+  def current_page
+    pagination_attribute_when_greater_zero(:page) || 1
+  end
+  
+  def per_page
+    pagination_attribute_when_greater_zero(:per_page) || DEFAULT_PER_PAGE
+  end
+  
+  def pagination_attribute_when_greater_zero(attribute)
+    self.search_options[:pagination][attribute] if self.search_options[:pagination] && self.search_options[:pagination][attribute].to_i > 0
   end
 
   def implement_in_subclass

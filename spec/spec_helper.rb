@@ -63,4 +63,5 @@ class Offer < ActiveRecord::Base
 end
 
 class Host
+  attr_accessor :id
 end
