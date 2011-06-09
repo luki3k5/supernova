@@ -31,6 +31,12 @@ describe "ThinkingSphinx" do
     Offer.for_user_ids(2, 1).to_a.to_a.sort_by(&:id) == [@offer1, @offer2]
   end
   
+  it "correctly filters out unwanted records" do
+    Offer.search_scope.without(:user_id => 2).to_a.to_a.sort_by(&:id).should == [@offer1]
+    Offer.search_scope.without(:user_id => 1).to_a.to_a.sort_by(&:id).should == [@offer2]
+    Offer.search_scope.without(:user_id => 1).without(:user_id => 2).to_a.to_a.sort_by(&:id).should == []
+  end
+  
   it "returns the corect ids" do
     Offer.for_user_ids(2).ids.to_a.to_a.should == [2]
   end

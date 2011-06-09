@@ -26,7 +26,8 @@ describe "Supernova::Criteria" do
     [:select, %w(stars)],
     [:near, "test"],
     [:within, 10],
-    [:options, {}]
+    [:options, {}],
+    [:without, {}]
   ].each do |args|
     it "returns the scope itself for #{args.first}" do
       scope.send(*args).should == scope
@@ -90,6 +91,14 @@ describe "Supernova::Criteria" do
   
   it "sets the correct pagination fields" do
     scope.paginate(:page => 9, :per_page => 2).search_options[:pagination].should == { :page => 9, :per_page => 2 }
+  end
+  
+  describe "#without" do
+    it "sets the correct without filter" do
+      scope.without(:user_id => 1).filters[:without].should == { :user_id => [1] }
+    end
+    
+    it "combines multiple without filters"
   end
   
   it "to_parameters raises an implement in subclass error" do

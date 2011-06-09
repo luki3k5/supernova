@@ -48,6 +48,15 @@ class Supernova::Criteria
   def with(filters)
     merge_filters :with, filters
   end
+  
+  def without(filters)
+    self.filters[:without] ||= Hash.new
+    filters.each do |key, value|
+      self.filters[:without][key] ||= Array.new
+      self.filters[:without][key] << value
+    end
+    self
+  end
 
   def select(fields)
     merge_search_options :select, fields

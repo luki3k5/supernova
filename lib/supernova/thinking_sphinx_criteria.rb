@@ -15,7 +15,7 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
   end
   
   def to_params
-    sphinx_options = { :match_mode => :boolean, :with => {}, :conditions => {} }
+    sphinx_options = { :match_mode => :boolean, :with => {}, :conditions => {}, :without => {} }
     sphinx_options[:order] = self.search_options[:order] if self.search_options[:order]
     sphinx_options[:limit] = self.search_options[:limit] if self.search_options[:limit]
     sphinx_options[:select] = self.search_options[:select] if self.search_options[:select]
@@ -25,6 +25,7 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
     sphinx_options[:classes] = [self.clazz] if self.clazz
     sphinx_options[:conditions].merge!(self.filters[:conditions]) if self.filters[:conditions]
     sphinx_options[:with].merge!(normalize_with_filter(self.filters[:with])) if self.filters[:with]
+    sphinx_options[:without].merge!(normalize_with_filter(self.filters[:without])) if self.filters[:without]
     sphinx_options.merge!(self.search_options[:custom_options]) if self.search_options[:custom_options]
     if self.search_options[:geo_center] && self.search_options[:geo_distance]
       sphinx_options[:geo] = [self.search_options[:geo_center][:lat].to_radians, self.search_options[:geo_center][:lng].to_radians]
