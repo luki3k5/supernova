@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{supernova}
-  s.version = "0.1.1"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tobias Schwab"]
-  s.date = %q{2011-06-08}
+  s.date = %q{2011-06-09}
   s.description = %q{Unified search scopes}
   s.email = %q{tobias.schwab@dynport.de}
   s.extra_rdoc_files = [
@@ -28,19 +28,26 @@ Gem::Specification.new do |s|
     "VERSION",
     "autotest/discover.rb",
     "lib/supernova.rb",
+    "lib/supernova/collection.rb",
     "lib/supernova/criteria.rb",
     "lib/supernova/numeric_extensions.rb",
+    "lib/supernova/solr.rb",
+    "lib/supernova/solr_criteria.rb",
     "lib/supernova/thinking_sphinx.rb",
     "lib/supernova/thinking_sphinx_criteria.rb",
     "spec/database.sql",
-    "spec/integration/search_spec.rb",
+    "spec/integration/solr_spec.rb",
+    "spec/integration/thinking_sphinx_spec.rb",
     "spec/spec_helper.rb",
     "spec/supernova/criteria_spec.rb",
     "spec/supernova/numeric_extensions_spec.rb",
+    "spec/supernova/solr_criteria_spec.rb",
+    "spec/supernova/solr_spec.rb",
     "spec/supernova/thinking_sphinx_criteria_spec.rb",
     "spec/supernova_spec.rb",
     "supernova.gemspec"
   ]
+  s.homepage = %q{http://github.com/dynport/supernova}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.7.2}
@@ -51,6 +58,8 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
+      s.add_runtime_dependency(%q<rsolr>, [">= 0"])
+      s.add_runtime_dependency(%q<will_paginate>, [">= 0"])
       s.add_development_dependency(%q<ruby-debug>, [">= 0"])
       s.add_development_dependency(%q<mysql2>, ["~> 0.2.7"])
       s.add_development_dependency(%q<geokit>, [">= 0"])
@@ -62,6 +71,8 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<rcov>, [">= 0"])
     else
       s.add_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
+      s.add_dependency(%q<rsolr>, [">= 0"])
+      s.add_dependency(%q<will_paginate>, [">= 0"])
       s.add_dependency(%q<ruby-debug>, [">= 0"])
       s.add_dependency(%q<mysql2>, ["~> 0.2.7"])
       s.add_dependency(%q<geokit>, [">= 0"])
@@ -74,6 +85,8 @@ Gem::Specification.new do |s|
     end
   else
     s.add_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
+    s.add_dependency(%q<rsolr>, [">= 0"])
+    s.add_dependency(%q<will_paginate>, [">= 0"])
     s.add_dependency(%q<ruby-debug>, [">= 0"])
     s.add_dependency(%q<mysql2>, ["~> 0.2.7"])
     s.add_dependency(%q<geokit>, [">= 0"])
