@@ -48,6 +48,11 @@ describe Supernova::SolrCriteria do
       criteria.to_params[:fq].should == []
     end
     
+    it "adds all without filters" do
+      criteria.without(:user_id => 1).to_params[:fq].should == ["!user_id:1"]
+      criteria.without(:user_id => 1).without(:user_id => 1).without(:user_id => 2).to_params[:fq].sort.should == ["!user_id:1", "!user_id:2"]
+    end
+    
     describe "with a nearby search" do
       let(:nearby_criteria) { Supernova::SolrCriteria.new.near(47, 11).within(10.kms) }
       

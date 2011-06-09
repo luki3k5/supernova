@@ -53,7 +53,7 @@ class Supernova::Criteria
     self.filters[:without] ||= Hash.new
     filters.each do |key, value|
       self.filters[:without][key] ||= Array.new
-      self.filters[:without][key] << value
+      self.filters[:without][key] << value if !self.filters[:without][key].include?(value)
     end
     self
   end

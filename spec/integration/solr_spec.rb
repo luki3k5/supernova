@@ -68,6 +68,12 @@ describe "Solr" do
       new_criteria.with(:user_id => 1, :enabled => true).to_a.total_entries.should == 0
     end
     
+    it "uses without correctly" do
+      new_criteria.without(:user_id => 1).to_a.map(&:id).should == [2]
+      new_criteria.without(:user_id => 2).to_a.map(&:id).should == [1]
+      new_criteria.without(:user_id => 2).without(:user_id => 1).to_a.map(&:id).should == []
+    end
+    
     it "uses the correct orders" do
       new_criteria.order("id desc").to_a.map(&:id).should == [2, 1]
       new_criteria.order("id asc").to_a.map(&:id).should == [1, 2]

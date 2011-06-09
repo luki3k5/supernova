@@ -4,6 +4,11 @@ class Supernova::SolrCriteria < Supernova::Criteria
   def to_params
     solr_options = { :fq => [], :q => "*:*" }
     solr_options[:fq] += self.filters[:with].map { |key, value| "#{key}:#{value}" } if self.filters[:with]
+    if self.filters[:without]
+     self.filters[:without].each do |key, values| 
+       solr_options[:fq] += values.map { |value| "!#{key}:#{value}" }
+     end
+    end
     solr_options[:sort] = self.search_options[:order] if self.search_options[:order]
     solr_options[:q] = self.filters[:search] if self.filters[:search]
     

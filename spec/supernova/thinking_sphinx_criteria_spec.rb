@@ -42,6 +42,7 @@ describe "Supernova::ThinkingSphinxCriteria" do
     
     it "sets the correct without parameters" do
       scope.without(:user_id => 9).to_params.at(1)[:without].should == { :user_id => [9] }
+      scope.without(:user_id => 9).without(:user_id => 9).without(:user_id => 1).to_params.at(1)[:without].should == { :user_id => [9, 1] }
     end
     
     it "calls sphinx with select fields" do

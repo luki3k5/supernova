@@ -98,7 +98,9 @@ describe "Supernova::Criteria" do
       scope.without(:user_id => 1).filters[:without].should == { :user_id => [1] }
     end
     
-    it "combines multiple without filters"
+    it "combines multiple without filters" do
+      scope.without(:user_id => 1).without(:user_id => 1).without(:user_id => 2).filters[:without].should == { :user_id => [1, 2] }
+    end
   end
   
   it "to_parameters raises an implement in subclass error" do
