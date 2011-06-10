@@ -1,4 +1,5 @@
 require "supernova/solr_criteria"
+require "supernova/solr_indexer"
 
 module Supernova::Solr
   class << self
