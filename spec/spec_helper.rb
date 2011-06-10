@@ -40,7 +40,7 @@ ThinkingSphinx::ActiveRecord::LogSubscriber.logger = Logger.new(
 
 ActiveRecord::Base.send(:include, ThinkingSphinx::ActiveRecord)
 
-ActiveRecord::Base.connection.execute("DROP TABLE offers")
+ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS offers")
 ActiveRecord::Base.connection.execute("CREATE TABLE offers (id SERIAL, text TEXT, user_id INTEGER, enabled BOOLEAN, popularity INTEGER, lat FLOAT, lng FLOAT)")
 
 class Offer < ActiveRecord::Base
