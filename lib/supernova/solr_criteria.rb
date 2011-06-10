@@ -18,6 +18,10 @@ class Supernova::SolrCriteria < Supernova::Criteria
       solr_options[:sfield] = :location
       solr_options[:fq] << "{!geofilt}"
     end
+    if self.search_options[:select]
+      self.search_options[:select] << :id
+      solr_options[:fl] = self.search_options[:select].compact.join(",") 
+    end
     solr_options[:fq] << "type:#{self.clazz}" if self.clazz
     
     if self.search_options[:pagination]
@@ -34,6 +38,7 @@ class Supernova::SolrCriteria < Supernova::Criteria
   end
   
   def build_doc(hash)
+    return hash if hash["type"].nil?
     doc = hash["type"].constantize.new
     hash.each do |key, value|
       if key == "id"

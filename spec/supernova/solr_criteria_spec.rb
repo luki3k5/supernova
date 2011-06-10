@@ -48,6 +48,10 @@ describe Supernova::SolrCriteria do
       criteria.to_params[:fq].should == []
     end
     
+    it "sets the correct select filters when present" do
+      criteria.select(:user_id).select(:user_id).select(:enabled).to_params[:fl].should == "user_id,enabled,id"
+    end
+    
     it "adds all without filters" do
       criteria.without(:user_id => 1).to_params[:fq].should == ["!user_id:1"]
       criteria.without(:user_id => 1).without(:user_id => 1).without(:user_id => 2).to_params[:fq].sort.should == ["!user_id:1", "!user_id:2"]
@@ -205,6 +209,12 @@ describe Supernova::SolrCriteria do
     
     it "would also work with mongoid ids" do
       criteria.build_doc("type" => "MongoOffer", "id" => "offers/4df08c30f3b0a72e7c227a55").id.should == "4df08c30f3b0a72e7c227a55"
+    end
+    
+    it "uses OpenStruct when type is not given" do
+      doc = criteria.build_doc("id" => "offers/4df08c30f3b0a72e7c227a55")
+      doc.should be_an_instance_of(Hash)
+      doc["id"].should == "offers/4df08c30f3b0a72e7c227a55"
     end
   end
   

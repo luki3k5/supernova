@@ -58,8 +58,12 @@ class Supernova::Criteria
     self
   end
 
-  def select(fields)
-    merge_search_options :select, fields
+  def select(*fields)
+    self.search_options[:select] ||= Array.new
+    fields.flatten.each do |field|
+      self.search_options[:select] << field if !self.search_options[:select].include?(field)
+    end
+    self
   end
 
   def conditions(filters)

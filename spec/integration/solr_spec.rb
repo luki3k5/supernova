@@ -94,5 +94,11 @@ describe "Solr" do
       results.total_entries.should == 0
       results.current_page.should == 1
     end
+    
+    it "only sets specific attributes" do
+      results = new_criteria.select(:user_id).with(:user_id => 1).to_a
+      results.length.should == 1
+      results.first.should == { "id" => "offers/1", "user_id" => 1 }
+    end
   end
 end
