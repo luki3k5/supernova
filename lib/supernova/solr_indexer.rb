@@ -1,3 +1,5 @@
+require "json"
+
 class Supernova::SolrIndexer
   attr_accessor :options, :db
   attr_writer :index_file_path

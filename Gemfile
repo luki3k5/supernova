@@ -9,6 +9,7 @@ source "http://rubygems.org"
 gem "thinking-sphinx", "2.0.3"
 gem "rsolr"
 gem "will_paginate"
+gem "json"
 
 group :development do
   gem "ruby-debug"
