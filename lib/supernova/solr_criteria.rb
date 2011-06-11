@@ -33,8 +33,12 @@ class Supernova::SolrCriteria < Supernova::Criteria
   
   def build_docs(docs)
     docs.map do |hash|
-      build_doc(hash)
+      self.search_options[:build_doc_method] ? self.search_options[:build_doc_method].call(hash) : build_doc(hash)
     end
+  end
+  
+  def build_doc_method(method)
+    merge_search_options :build_doc_method, method
   end
   
   def build_doc(hash)

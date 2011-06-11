@@ -11,8 +11,12 @@ class Supernova::SolrIndexer
     self.options = options
   end
   
+  def query_db(query)
+    db.send(db.respond_to?(:query) ? :query : :select_all, query)
+  end
+  
   def index_query(query)
-    db.send(db.respond_to?(:query) ? :query : :select_all, query).each do |row|
+    query_db(query).each do |row|
       yield(row) if block_given?
       write_to_file(row)
     end

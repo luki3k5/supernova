@@ -179,6 +179,12 @@ describe Supernova::SolrCriteria do
       criteria.should_receive(:build_doc).with(doc2)
       criteria.build_docs(docs)
     end
+    
+    it "uses a custom mapper when build_doc_method is set" do
+      doc1 = { "a" => 1 }
+      meth = lambda { |row| row.to_a }
+      criteria.build_doc_method(meth).build_docs([doc1]).should == [[["a", 1]]]
+    end
   end
   
   describe "#build_doc" do

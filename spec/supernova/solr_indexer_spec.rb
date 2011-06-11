@@ -31,24 +31,31 @@ describe Supernova::SolrIndexer do
     end
   end
   
-  describe "#index_query" do
-    let(:query) { %(SELECT CONCAT("user_", id) AS id, title FROM people WHERE type = 'User') }
-    
+  describe "#query_db" do
     it "executes the query" do
-      db.should_receive(:query).with(query).and_return [to_index]
-      indexer.index_query(query)
+      db.should_receive(:query).with("query").and_return [to_index]
+      indexer.query_db("query")
     end
     
     it "calls select_all when not responding to query" do
       old_mysql_double = double("old mysql double", :select_all => [])
       indexer.db = old_mysql_double
-      old_mysql_double.should_receive(:select_all).and_return [to_index]
+      old_mysql_double.should_receive(:select_all).with("query").and_return [to_index]
+      indexer.query_db("query")
+    end
+  end
+  
+  describe "#index_query" do
+    let(:query) { %(SELECT CONCAT("user_", id) AS id, title FROM people WHERE type = 'User') }
+    
+    it "executes the query" do
+      indexer.should_receive(:query_db).with(query).and_return [to_index]
       indexer.index_query(query)
     end
     
     it "calls write_to_file on all rows" do
       rows = [double("1"), double("2")]
-      db.stub(:query).and_return rows
+      indexer.stub(:query_db).and_return rows
       indexer.should_receive(:write_to_file).with(rows.first)
       indexer.should_receive(:write_to_file).with(rows.at(1))
       indexer.stub!(:finish)
