@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{supernova}
-  s.version = "0.2.1"
+  s.version = "0.2.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tobias Schwab"]
-  s.date = %q{2011-06-09}
+  s.date = %q{2011-06-11}
   s.description = %q{Unified search scopes}
   s.email = %q{tobias.schwab@dynport.de}
   s.extra_rdoc_files = [
@@ -33,8 +33,46 @@ Gem::Specification.new do |s|
     "lib/supernova/numeric_extensions.rb",
     "lib/supernova/solr.rb",
     "lib/supernova/solr_criteria.rb",
+    "lib/supernova/solr_indexer.rb",
     "lib/supernova/thinking_sphinx.rb",
     "lib/supernova/thinking_sphinx_criteria.rb",
+    "solr/conf/admin-extra.html",
+    "solr/conf/elevate.xml",
+    "solr/conf/mapping-FoldToASCII.txt",
+    "solr/conf/mapping-ISOLatin1Accent.txt",
+    "solr/conf/protwords.txt",
+    "solr/conf/schema.xml",
+    "solr/conf/scripts.conf",
+    "solr/conf/solrconfig.xml",
+    "solr/conf/spellings.txt",
+    "solr/conf/stopwords.txt",
+    "solr/conf/synonyms.txt",
+    "solr/conf/velocity/VM_global_library.vm",
+    "solr/conf/velocity/browse.vm",
+    "solr/conf/velocity/cluster.vm",
+    "solr/conf/velocity/clusterResults.vm",
+    "solr/conf/velocity/doc.vm",
+    "solr/conf/velocity/facet_dates.vm",
+    "solr/conf/velocity/facet_fields.vm",
+    "solr/conf/velocity/facet_queries.vm",
+    "solr/conf/velocity/facet_ranges.vm",
+    "solr/conf/velocity/facets.vm",
+    "solr/conf/velocity/footer.vm",
+    "solr/conf/velocity/head.vm",
+    "solr/conf/velocity/header.vm",
+    "solr/conf/velocity/hit.vm",
+    "solr/conf/velocity/jquery.autocomplete.css",
+    "solr/conf/velocity/jquery.autocomplete.js",
+    "solr/conf/velocity/layout.vm",
+    "solr/conf/velocity/main.css",
+    "solr/conf/velocity/query.vm",
+    "solr/conf/velocity/querySpatial.vm",
+    "solr/conf/velocity/suggest.vm",
+    "solr/conf/velocity/tabs.vm",
+    "solr/conf/xslt/example.xsl",
+    "solr/conf/xslt/example_atom.xsl",
+    "solr/conf/xslt/example_rss.xsl",
+    "solr/conf/xslt/luke.xsl",
     "spec/database.sql",
     "spec/integration/solr_spec.rb",
     "spec/integration/thinking_sphinx_spec.rb",
@@ -42,6 +80,7 @@ Gem::Specification.new do |s|
     "spec/supernova/criteria_spec.rb",
     "spec/supernova/numeric_extensions_spec.rb",
     "spec/supernova/solr_criteria_spec.rb",
+    "spec/supernova/solr_indexer_spec.rb",
     "spec/supernova/solr_spec.rb",
     "spec/supernova/thinking_sphinx_criteria_spec.rb",
     "spec/supernova_spec.rb",
@@ -50,7 +89,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/dynport/supernova}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.7.2}
+  s.rubygems_version = %q{1.6.2}
   s.summary = %q{Unified search scopes}
 
   if s.respond_to? :specification_version then
@@ -60,6 +99,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
       s.add_runtime_dependency(%q<rsolr>, [">= 0"])
       s.add_runtime_dependency(%q<will_paginate>, [">= 0"])
+      s.add_runtime_dependency(%q<json>, [">= 0"])
       s.add_development_dependency(%q<ruby-debug>, [">= 0"])
       s.add_development_dependency(%q<mysql2>, ["~> 0.2.7"])
       s.add_development_dependency(%q<geokit>, [">= 0"])
@@ -73,6 +113,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
       s.add_dependency(%q<rsolr>, [">= 0"])
       s.add_dependency(%q<will_paginate>, [">= 0"])
+      s.add_dependency(%q<json>, [">= 0"])
       s.add_dependency(%q<ruby-debug>, [">= 0"])
       s.add_dependency(%q<mysql2>, ["~> 0.2.7"])
       s.add_dependency(%q<geokit>, [">= 0"])
@@ -87,6 +128,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<thinking-sphinx>, ["= 2.0.3"])
     s.add_dependency(%q<rsolr>, [">= 0"])
     s.add_dependency(%q<will_paginate>, [">= 0"])
+    s.add_dependency(%q<json>, [">= 0"])
     s.add_dependency(%q<ruby-debug>, [">= 0"])
     s.add_dependency(%q<mysql2>, ["~> 0.2.7"])
     s.add_dependency(%q<geokit>, [">= 0"])
