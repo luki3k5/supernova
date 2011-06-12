@@ -59,7 +59,7 @@ class Supernova::SolrCriteria < Supernova::Criteria
   end
   
   def build_doc(hash)
-    return hash if hash["type"].nil?
+    return hash if !hash["type"].respond_to?(:constantize)
     doc = hash["type"].constantize.new
     doc.instance_variable_set("@solr_doc", hash)
     hash.each do |key, value|

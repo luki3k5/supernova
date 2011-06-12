@@ -215,6 +215,12 @@ describe Supernova::SolrCriteria do
       end
     end
     
+    it "returns a Hash when type does not response to " do
+      type = double("type")
+      type.should_receive(:respond_to?).with(:constantize).and_return false
+      criteria.build_doc("type" => type).should be_an_instance_of(Hash)
+    end
+    
     it "sets the original solr_doc" do
       solr_doc = { "type" => "Offer", "id" => "offers/id" }
       criteria.build_doc(solr_doc).instance_variable_get("@solr_doc").should == solr_doc
