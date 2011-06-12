@@ -7,12 +7,14 @@ describe "Solr" do
     Supernova::Solr.truncate!
     Offer.criteria_class = Supernova::SolrCriteria
     root = Geokit::LatLng.new(47, 11)
-    endpoint = root.endpoint(90, 50, :units => :kms)
+    # endpoint = root.endpoint(90, 50, :units => :kms)
+    e_lat = 46.9981112912042
+    e_lng = 11.6587158814378
     Supernova::Solr.connection.add(:id => "offers/1", :type => "Offer", :user_id => 1, :enabled => false, :text => "Hans Meyer", :popularity => 10, 
       :location => "#{root.lat},#{root.lng}", :type => "Offer"
     )
     Supernova::Solr.connection.add(:id => "offers/2", :user_id => 2, :enabled => true, :text => "Marek Mintal", :popularity => 1, 
-      :location => "#{endpoint.lat},#{endpoint.lng}", :type => "Offer"
+      :location => "#{e_lat},#{e_lng}", :type => "Offer"
     )
     Supernova::Solr.connection.commit
   end
@@ -48,6 +50,37 @@ describe "Solr" do
       { 49.kms => 1, 51.kms => 2 }.each do |distance, total_entries|
         it "returns #{total_entries} for distance #{distance}" do
           new_criteria.near(47, 11).within(distance).to_a.total_entries.should == total_entries
+        end
+      end
+    end
+    
+    describe "range search" do
+      { Range.new(2, 3) => [2], Range.new(3, 10) => [], Range.new(1, 2) => [1, 2] }.each do |range, ids|
+        it "returns #{ids.inspect} for range #{range.inspect}" do
+          new_criteria.with(:user_id => range).map { |doc| doc["id"] }.sort.should == ids
+        end
+      end
+    end
+    
+    describe "not searches" do
+      it "finds the correct documents for not nil" do
+        Supernova::Solr.connection.add(:id => "offers/3", :enabled => true, :text => "Marek Mintal", :popularity => 1, 
+          :type => "Offer"
+        )
+        Supernova::Solr.connection.commit
+        raise "There should be 3 docs" if new_criteria.to_a.total_entries != 3
+        new_criteria.with(:user_id.not => nil).to_a.map { |h| h["id"] }.should == [1, 2]
+      end
+      
+      it "finds the correct values for not specific value" do
+        new_criteria.with(:user_id.not => 1).to_a.map { |h| h["id"] }.should == [2]
+      end
+    end
+    
+    describe "gt and lt searches" do
+      { :gt => [2], :gte => [1, 2], :lt => [], :lte => [1] }.each do |type, ids|
+        it "finds ids #{ids.inspect} for #{type}" do
+          new_criteria.with(:user_id.send(type) => 1).to_a.map { |row| row["id"] }.sort.should == ids
         end
       end
     end

@@ -1,9 +1,10 @@
 require "rsolr"
 
 class Supernova::SolrCriteria < Supernova::Criteria
+  # move this into separate methods (test each separatly)
   def to_params
     solr_options = { :fq => [], :q => "*:*" }
-    solr_options[:fq] += self.filters[:with].map { |key, value| "#{key}:#{value}" } if self.filters[:with]
+    solr_options[:fq] += fq_from_with(self.filters[:with])
     if self.filters[:without]
      self.filters[:without].each do |key, values| 
        solr_options[:fq] += values.map { |value| "!#{key}:#{value}" }
@@ -29,6 +30,20 @@ class Supernova::SolrCriteria < Supernova::Criteria
       solr_options[:start] = (current_page - 1) * solr_options[:rows]
     end
     solr_options
+  end
+  
+  def fq_from_with(with)
+    if with.blank?
+      []
+    else
+      with.map do |key, value|
+        key.respond_to?(:solr_filter_for) ? key.solr_filter_for(value) : fq_filter_for_key_and_value(key, value)
+      end
+    end
+  end
+  
+  def fq_filter_for_key_and_value(key, value)
+    "#{key}:#{value.is_a?(Range) ? "[#{value.first} TO #{value.last}]" : value}"
   end
   
   def build_docs(docs)

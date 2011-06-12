@@ -19,6 +19,16 @@ describe Supernova::SolrCriteria do
     Supernova::Solr.stub!(:connection).and_return rsolr
   end
   
+  describe "#fq_from_with" do
+    it "returns the correct filter for with ranges" do
+      criteria.fq_from_with(:user_id => Range.new(10, 12)).should == ["user_id:[10 TO 12]"]
+    end
+    
+    it "returns the correct filter for not queries" do
+      criteria.fq_from_with(:user_id.not => nil).should == ["user_id:[* TO *]"]
+    end
+  end
+  
   describe "#to_params" do
     it "returns a Hash" do
       criteria.to_params.should be_an_instance_of(Hash)
