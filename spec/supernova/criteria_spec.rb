@@ -180,6 +180,14 @@ describe "Supernova::Criteria" do
     end
   end
   
+  describe "#where" do
+    it "delegates to with" do
+      ret = double("ret")
+      scope.should_receive(:with).with(:a => 9).and_return ret
+      scope.where(:a => 9).should == ret
+    end
+  end
+  
   describe "#merge" do
     let(:criteria) { Supernova::Criteria.new.order("popularity asc").with(:a => 1).conditions(:b => 2).search("New Search") }
     let(:new_crit) { Supernova::Criteria.new.order("popularity desc").with(:c => 8).conditions(:e => 9).search("Search") }

@@ -49,6 +49,10 @@ class Supernova::Criteria
     merge_filters :with, filters
   end
   
+  def where(*args)
+    with(*args)
+  end
+  
   def without(filters)
     self.filters[:without] ||= Hash.new
     filters.each do |key, value|
