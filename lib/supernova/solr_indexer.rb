@@ -4,6 +4,8 @@ class Supernova::SolrIndexer
   attr_accessor :options, :db, :ids
   attr_writer :index_file_path
   
+  include Supernova::Solr
+  
   class << self
     def field_definitions
       @field_definitions ||= {}
@@ -24,12 +26,15 @@ class Supernova::SolrIndexer
     end
     
     def method_missing(*args)
-      criteria = Supernova::SolrCriteria.new(self.clazz).attribute_mapping(self.field_definitions)
-      if criteria.respond_to?(args.first)
-        criteria.send(*args)
+      if search_scope.respond_to?(args.first)
+        search_scope.send(*args)
       else
         super
       end
+    end
+    
+    def search_scope
+      Supernova::SolrCriteria.new(self.clazz).attribute_mapping(self.field_definitions)
     end
   end
   

@@ -23,7 +23,7 @@ describe "ThinkingSphinx" do
     @offer1 = Offer.create!(:id => 1, :user_id => 1, :enabled => false, :text => "Hans Meyer", :popularity => 10, :lat => root.lat, :lng => root.lng)
     @offer2 = Offer.create!(:id => 2, :user_id => 2, :enabled => true, :text => "Marek Mintal", :popularity => 1, :lat => endpoint.lat, :lng => endpoint.lng)
     ts.controller.index
-    sleep 0.2
+    sleep 0.3
   end
   
   it "finds the correct objects" do

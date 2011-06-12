@@ -417,6 +417,24 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  describe "#named_search_scope" do
+    it "returns the correct scope" do
+      indexer_clazz.named_search_scope :published do
+        where(:public => true)
+      end
+      indexer_clazz.published.search_options[:attribute_mapping].should == {
+        :artist_id=>{:type=>:integer}, :title=>{:type=>:text}, :created_at=>{:type=>:date}, :description=>{:type=>:text}
+      }
+    end
+    
+    it "works with attribute mappings" do
+      indexer_clazz.named_search_scope :with_title do
+        where(:title.ne => nil)
+      end
+      indexer_clazz.with_title.to_params[:fq].should include("title_t:[* TO *]")
+    end
+  end
+  
   describe "#solr_field_for_field_name_and_mapping" do
     let(:mapping) do 
       { 
