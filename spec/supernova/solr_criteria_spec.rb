@@ -215,6 +215,11 @@ describe Supernova::SolrCriteria do
       end
     end
     
+    it "sets the original solr_doc" do
+      solr_doc = { "type" => "Offer", "id" => "offers/id" }
+      criteria.build_doc(solr_doc).instance_variable_get("@solr_doc").should == solr_doc
+    end
+    
     it "should be readonly" do
       criteria.build_doc(docs.first).should be_readonly
     end

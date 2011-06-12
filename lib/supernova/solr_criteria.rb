@@ -61,6 +61,7 @@ class Supernova::SolrCriteria < Supernova::Criteria
   def build_doc(hash)
     return hash if hash["type"].nil?
     doc = hash["type"].constantize.new
+    doc.instance_variable_set("@solr_doc", hash)
     hash.each do |key, value|
       if key == "id"
         doc.id = value.to_s.split("/").last if doc.respond_to?(:id=)

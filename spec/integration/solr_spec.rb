@@ -58,6 +58,13 @@ describe "Solr" do
       end
     end
     
+    it "includes the returned solr_doc" do
+      new_criteria.search("Hans").to_a.first.instance_variable_get("@solr_doc").should == {
+        "id" => "offers/1", "type" => "Offer", "user_id" => 1, "enabled" => [false], "text" => "Hans Meyer", "popularity" => 10, 
+        "location" => "47,11", "type" => "Offer"
+      }
+    end
+    
     describe "nearby search" do
       { 49.kms => 1, 51.kms => 2 }.each do |distance, total_entries|
         it "returns #{total_entries} for distance #{distance}" do
