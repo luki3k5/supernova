@@ -11,7 +11,9 @@ class Supernova::SolrCriteria < Supernova::Criteria
      end
     end
     solr_options[:sort] = self.search_options[:order] if self.search_options[:order]
-    solr_options[:q] = self.filters[:search] if self.filters[:search]
+    if self.search_options[:search].is_a?(Array)
+      solr_options[:q] = self.search_options[:search].map { |query| "(#{query})" }.join(" AND ")
+    end
     
     if self.search_options[:geo_center] && self.search_options[:geo_distance]
       solr_options[:pt] = "#{self.search_options[:geo_center][:lat]},#{self.search_options[:geo_center][:lng]}"

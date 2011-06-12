@@ -31,7 +31,7 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
       sphinx_options[:geo] = [self.search_options[:geo_center][:lat].to_radians, self.search_options[:geo_center][:lng].to_radians]
       sphinx_options[:with]["@geodist"] = self.search_options[:geo_distance].is_a?(Range) ? self.search_options[:geo_distance] : Range.new(0.0, self.search_options[:geo_distance])
     end
-    [self.filters[:search], sphinx_options]
+    [(self.search_options[:search] || Array.new).join(" "), sphinx_options]
   end
   
   def to_a

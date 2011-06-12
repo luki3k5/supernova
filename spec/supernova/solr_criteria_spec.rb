@@ -47,7 +47,11 @@ describe Supernova::SolrCriteria do
     end
     
     it "sets search correct search query" do
-      criteria.search("some query").to_params[:q].should == "some query"
+      criteria.search("some query").to_params[:q].should == "(some query)"
+    end
+    
+    it "joins the search terms with AND" do
+      criteria.search("some", "query").to_params[:q].should == "(some) AND (query)"
     end
     
     it "adds a filter on type when clazz set" do

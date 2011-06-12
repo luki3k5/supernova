@@ -59,7 +59,7 @@ describe "Supernova::Criteria" do
   
   describe "#search" do
     it "sets the query" do
-      scope.search("title").filters[:search].should == "title"
+      scope.search("title").search_options[:search].should == ["title"]
     end
   end
   
@@ -201,7 +201,7 @@ describe "Supernova::Criteria" do
     end
     
     it "merges search search" do
-      new_crit.merge(criteria).filters[:search].should == "New Search"
+      new_crit.merge(criteria).search_options[:search].should == ["New Search"]
     end
     
     it "calls merge on options" do

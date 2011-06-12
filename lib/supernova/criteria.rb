@@ -41,8 +41,8 @@ class Supernova::Criteria
     merge_search_options :group_by, group_option
   end
 
-  def search(query)
-    merge_filters :search, query
+  def search(*terms)
+    merge_filters_array :search, terms
   end
 
   def with(filters)
@@ -59,11 +59,7 @@ class Supernova::Criteria
   end
 
   def select(*fields)
-    self.search_options[:select] ||= Array.new
-    fields.flatten.each do |field|
-      self.search_options[:select] << field if !self.search_options[:select].include?(field)
-    end
-    self
+    merge_filters_array :select, fields
   end
 
   def conditions(filters)
@@ -104,6 +100,14 @@ class Supernova::Criteria
 
   def merge_filters(key, value)
     merge_filters_or_search_options(self.filters, key, value)
+  end
+  
+  def merge_filters_array(key, fields)
+    self.search_options[key] ||= Array.new
+    fields.flatten.each do |field|
+      self.search_options[key] << field if !self.search_options[key].include?(field)
+    end
+    self
   end
 
   def merge_search_options(key, value)

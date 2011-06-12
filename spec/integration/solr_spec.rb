@@ -46,6 +46,18 @@ describe "Solr" do
       new_criteria.to_a.per_page.should == 25
     end
     
+    describe "plain text search" do
+      it "returns the correct entries for 1 term" do
+        new_criteria.search("Hans").to_a.map { |h| h["id"] }.should == [1]
+        new_criteria.search("Hans").search("Meyer").to_a.map { |h| h["id"] }.should == [1]
+        new_criteria.search("Marek").to_a.map { |h| h["id"] }.should == [2]
+      end
+      
+      it "returns the correct options for a combined search" do
+        new_criteria.search("Hans", "Marek").to_a.map.should == []
+      end
+    end
+    
     describe "nearby search" do
       { 49.kms => 1, 51.kms => 2 }.each do |distance, total_entries|
         it "returns #{total_entries} for distance #{distance}" do
