@@ -25,6 +25,7 @@ describe Supernova::SolrIndexer do
   
   before(:each) do
     File.stub!(:open).and_return file_stub
+    Kernel.stub!(:`).and_return true
   end
   
   describe "initialize" do
@@ -238,14 +239,14 @@ describe Supernova::SolrIndexer do
     
     it "calls the correct curl command" do
       indexer.index_file_path = "/tmp/some_path.json"
-      indexer.should_receive(:system).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'")
+      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'")
       indexer.do_index_file(:local => true)
     end
     
     it "executes the correct curl call when not local" do
       # curl 'http://localhost:8983/solr/update/json?commit=true' --data-binary @books.json -H 'Content-type:application/json'
       indexer.index_file_path = "/tmp/some_path.json"
-      indexer.should_receive(:system).with("cd /tmp && curl -s 'http://solr.xx:9333/solr/update/json?commit=true' --data-binary @some_path.json -H 'Content-type:application/json'")
+      Kernel.should_receive(:`).with("cd /tmp && curl -s 'http://solr.xx:9333/solr/update/json?commit=true' --data-binary @some_path.json -H 'Content-type:application/json'")
       indexer.do_index_file
     end
   end

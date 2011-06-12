@@ -190,6 +190,6 @@ class Supernova::SolrIndexer
     else
       %(cd #{File.dirname(index_file_path)} && curl -s '#{solr_url}/update/json?commit=true' --data-binary @#{File.basename(index_file_path)} -H 'Content-type:application/json')
     end
-    system(cmd)
+    Kernel.send(:`, cmd)
   end
 end
