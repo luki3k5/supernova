@@ -34,7 +34,7 @@ class Supernova::SolrIndexer
     end
     
     def search_scope
-      Supernova::SolrCriteria.new(self.clazz).attribute_mapping(self.field_definitions)
+      Supernova::SolrCriteria.new(self.clazz).attribute_mapping(self.field_definitions).named_scope_class(self)
     end
   end
   

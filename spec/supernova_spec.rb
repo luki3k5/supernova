@@ -58,7 +58,7 @@ describe Supernova do
     
     describe "chaining" do
       it "calls merge with both scopes" do
-        scope = Supernova::ThinkingSphinxCriteria.new(clazz)
+        scope = Supernova::ThinkingSphinxCriteria.new(clazz).named_scope_class(clazz)
         scope.should_receive(:merge).with(instance_of(Supernova::ThinkingSphinxCriteria))
         scope.popular
       end

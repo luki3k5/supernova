@@ -170,13 +170,17 @@ class Supernova::Criteria
     if args.length == 1 && Array.new.respond_to?(args.first)
       to_a.send(args.first, &block)
     elsif self.named_scope_defined?(args.first)
-      self.merge(self.clazz.send(*args)) # merge named scope and current criteria
+      self.merge(self.search_options[:named_scope_class].send(*args)) # merge named scope and current criteria
     else
       super
     end
   end
   
+  def named_scope_class(clazz)
+    merge_search_options :named_scope_class, clazz
+  end
+  
   def named_scope_defined?(name)
-    self.clazz && self.clazz.respond_to?(:defined_named_search_scopes) && clazz.defined_named_search_scopes.respond_to?(:include?) && clazz.defined_named_search_scopes.include?(name)
+    self.search_options[:named_scope_class] && self.search_options[:named_scope_class].respond_to?(:defined_named_search_scopes) && self.search_options[:named_scope_class].defined_named_search_scopes.respond_to?(:include?) && self.search_options[:named_scope_class].defined_named_search_scopes.include?(name)
   end
 end

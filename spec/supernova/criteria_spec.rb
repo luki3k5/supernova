@@ -169,7 +169,7 @@ describe "Supernova::Criteria" do
     
     it "it calls merge with self and returned scope" do
       clazz = double("clazz")
-      scope = Supernova::Criteria.new(clazz)
+      scope = Supernova::Criteria.new.named_scope_class(clazz)
       scope.stub(:named_scope_defined?).and_return true
       rge_scope = double("rgne_scope")
       scope_ret = double("ret")
@@ -195,6 +195,10 @@ describe "Supernova::Criteria" do
     end
   end
   
+  describe "#with_scopes" do
+    
+  end
+  
   describe "#merge" do
     let(:criteria) { Supernova::Criteria.new.order("popularity asc").with(:a => 1).conditions(:b => 2).search("New Search") }
     let(:new_crit) { Supernova::Criteria.new.order("popularity desc").with(:c => 8).conditions(:e => 9).search("Search") }
@@ -217,6 +221,24 @@ describe "Supernova::Criteria" do
     
     it "merges search search" do
       new_crit.merge(criteria).search_options[:search].should == ["New Search"]
+    end
+    
+    it "correctly merges the named_scope_class" do
+      new_crit.named_scope_class(String)
+      new_crit.merge(criteria).search_options[:named_scope_class].should == String
+    end
+    
+    it "correctly merges the attribute_mapping" do
+      mapping = { :title => { :type => :string } }
+      new_crit.attribute_mapping(mapping)
+      new_crit.merge(criteria).search_options[:attribute_mapping].should == mapping
+    end
+    
+    it "uses the base attributes_mapping when " do
+      mapping = { :title => { :type => :string }, :artist_name => { :type => :string } }
+      other = Supernova::SolrCriteria.new.with(:artist_name => "name")
+      Supernova::SolrCriteria.new.attribute_mapping(mapping).with(:title => "test").merge(other).to_params[:fq].should include("artist_name_s:name")
+      Supernova::SolrCriteria.new.attribute_mapping(mapping).with(:title => "test").merge(other).to_params[:fq].should include("title_s:test")
     end
     
     it "calls merge on options" do
@@ -293,7 +315,7 @@ describe "Supernova::Criteria" do
         attr_accessor :defined_named_search_scopes
       end
       clazz.defined_named_search_scopes = nil
-      Supernova::Criteria.new(clazz).should_not be_named_scope_defined(:rgne)
+      Supernova::Criteria.new.named_scope_class(clazz).should_not be_named_scope_defined(:rgne)
     end
     
     it "returns false when clazz is responding to defined_search_scopes but not included" do
@@ -302,7 +324,7 @@ describe "Supernova::Criteria" do
         attr_accessor :defined_named_search_scopes
       end
       clazz.defined_named_search_scopes = [:some_other]
-      Supernova::Criteria.new(clazz).should_not be_named_scope_defined(:rgne)
+      Supernova::Criteria.new.named_scope_class(clazz).should_not be_named_scope_defined(:rgne)
     end
     
     it "returns true when clazz is responding to defined_search_scopes and included" do
@@ -311,7 +333,13 @@ describe "Supernova::Criteria" do
         attr_accessor :defined_named_search_scopes
       end
       clazz.defined_named_search_scopes = [:rgne]
-      Supernova::Criteria.new(clazz).should be_named_scope_defined(:rgne)
+      Supernova::Criteria.new.named_scope_class(clazz).should be_named_scope_defined(:rgne)
+    end
+  end
+  
+  describe "#named_scope_class" do
+    it "sets the named_scope_class search_option" do
+      Supernova::Criteria.new.named_scope_class(String).search_options[:named_scope_class].should == String
     end
   end
 end

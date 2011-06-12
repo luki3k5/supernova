@@ -433,6 +433,19 @@ describe Supernova::SolrIndexer do
       end
       indexer_clazz.with_title.to_params[:fq].should include("title_t:[* TO *]")
     end
+    
+    it "allows chaining of named scopes" do
+      indexer_clazz.named_search_scope :with_title do
+        where(:title.ne => nil)
+      end
+      
+      indexer_clazz.named_search_scope :with_description do
+        where(:description.ne => nil)
+      end
+      fqs = indexer_clazz.with_description.with_title.to_params[:fq]
+      fqs.should include("description_t:[* TO *]")
+      fqs.should include("title_t:[* TO *]")
+    end
   end
   
   describe "#solr_field_for_field_name_and_mapping" do

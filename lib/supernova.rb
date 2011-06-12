@@ -10,7 +10,7 @@ module Supernova
     attr_accessor :criteria_class, :defined_named_search_scopes
     
     def search_scope
-      self.criteria_class.new(self)
+      self.criteria_class.new(self).named_scope_class(self)
     end
     
     def named_search_scope(name, &block)
