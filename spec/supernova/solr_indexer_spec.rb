@@ -1,18 +1,27 @@
 require "spec_helper"
 
 describe Supernova::SolrIndexer do
-  
+  let(:indexer_clazz) { Class.new(Supernova::SolrIndexer) }
   let(:db) { double("db", :query => [to_index]) }
   let(:to_index) { { :id => 1, :title => "Some Title"} }
   let(:file_stub) { double("file").as_null_object }
   
-  let(:indexer) {
+  let(:indexer) do
     indexer = Supernova::SolrIndexer.new
     indexer.db = db
     Supernova::Solr.url = "http://solr.xx:9333/solr"
     indexer.stub!(:system).and_return true
     indexer
-  }
+  end
+  
+  let(:custom_indexer) { indexer_clazz.new }
+  
+  before(:each) do
+    indexer_clazz.has(:title, :type => :text)
+    indexer_clazz.has(:artist_id, :type => :integer)
+    indexer_clazz.has(:description, :type => :text)
+    indexer_clazz.has(:created_at, :type => :date)
+  end
   
   before(:each) do
     File.stub!(:open).and_return file_stub
@@ -28,6 +37,82 @@ describe Supernova::SolrIndexer do
     it "sets all known attributes" do
       indexer = Supernova::SolrIndexer.new(:db => db)
       indexer.db.should == db
+    end
+    
+    it "can be initialized with ids" do
+      Supernova::SolrIndexer.new(:ids => [1, 2]).ids.should == [1, 2]
+    end
+    
+    it "sets ids to all when nil" do
+      Supernova::SolrIndexer.new.ids.should == :all
+    end
+  end
+  
+  describe "index!" do
+    it "calls query_to_index" do
+      indexer.should_receive(:query_to_index).and_return "some query"
+      indexer.index!
+    end
+    
+    it "calls index_query on query_to_index" do
+      query = "some query"
+      indexer.stub!(:query_to_index).and_return query
+      indexer.should_receive(:index_query).with(query)
+      indexer.index!
+    end
+    
+    it "calls row_to_solr with all returned rows from sql" do
+      row1 = double("row1")
+      row2 = double("row2")
+      indexer.stub!(:query).and_return [row1, row2]
+      indexer.stub!(:query_to_index).and_return "some query"
+      indexer.should_receive(:row_to_solr).with(row1)
+      indexer.stub!(:index_query).and_yield(row1)
+      indexer.index!
+    end
+  end
+  
+  describe "validate_lat" do
+    { nil => nil, 10 => 10.0, 90.1 => nil, 90 => 90, -90.1 => nil, -90 => -90 }.each do |from, to|
+      it "converts #{from} to #{to}" do
+        indexer.validate_lat(from).should == to
+      end
+    end
+  end
+  
+  describe "validate_lng" do
+    { nil => nil, 10 => 10.0, 180.1 => nil, 180 => 180, -180.1 => nil, -180 => -180 }.each do |from, to|
+      it "converts #{from} to #{to}" do
+        indexer.validate_lng(from).should == to
+      end
+    end
+  end
+  
+  describe "#sql_column_from_field_and_type" do
+    {
+      [:title, :string] => "title AS title_s",
+      [:count, :int] => "count AS count_i",
+      [:test, :sint] => "test AS test_si",
+      [:lat, :float] => "lat AS lat_f",
+      [:text, :boolean] => "text AS text_b",
+      [:loc, :location] => "loc AS loc_p",
+      [:deleted_at, :date] => %(IF(deleted_at IS NULL, NULL, CONCAT(REPLACE(deleted_at, " ", "T"), "Z")) AS deleted_at_dt),
+    }.each do |(field, type), name|
+      it "maps #{field} with #{type} to #{name}" do
+        indexer.sql_column_from_field_and_type(field, type).should == name
+      end
+    end
+    
+    it "raises an error when no mapping defined" do
+      lambda {
+        indexer.sql_column_from_field_and_type(:text, :rgne)
+      }.should raise_error
+    end
+  end
+  
+  describe "#row_to_solr" do
+    it "returns the db row by default" do
+      indexer.row_to_solr("id" => 1).should == { "id" => 1 }
     end
   end
   
@@ -162,6 +247,155 @@ describe Supernova::SolrIndexer do
       indexer.index_file_path = "/tmp/some_path.json"
       indexer.should_receive(:system).with("cd /tmp && curl -s 'http://solr.xx:9333/solr/update/json?commit=true' --data-binary @some_path.json -H 'Content-type:application/json'")
       indexer.do_index_file
+    end
+  end
+
+  describe "define mappings" do
+    let(:blank_indexer_clazz) { Class.new(Supernova::SolrIndexer) }
+    
+    it "has an empty array of field_definitions by default" do
+      blank_indexer_clazz.field_definitions.should == {}
+    end
+    
+    it "has adds filters to the field_definitions" do
+      blank_indexer_clazz.has(:artist_id, :type => :integer, :sortable => true)
+      blank_indexer_clazz.field_definitions.should == { :artist_id => { :type => :integer, :sortable => true } }
+    end
+    
+    it "clazz sets indexed class" do
+      blank_indexer_clazz.clazz(Integer)
+      blank_indexer_clazz.instance_variable_get("@clazz").should == Integer
+    end
+    
+    it "does not change but return the clazz when nil" do
+      blank_indexer_clazz.clazz(Integer)
+      blank_indexer_clazz.clazz.should == Integer
+    end
+    
+    it "allows setting the clazz to nil" do
+      blank_indexer_clazz.clazz(Integer)
+      blank_indexer_clazz.clazz(nil)
+      blank_indexer_clazz.clazz.should be_nil
+    end
+    
+    it "table_name sets the table name" do
+      blank_indexer_clazz.table_name(:people)
+      blank_indexer_clazz.instance_variable_get("@table_name").should == :people
+    end
+    
+    it "table_name does not overwrite but return table_name when nil given" do
+      blank_indexer_clazz.table_name(:people)
+      blank_indexer_clazz.table_name.should == :people
+    end
+    
+    it "allows setting the table_name to nil" do
+      blank_indexer_clazz.table_name(:people)
+      blank_indexer_clazz.table_name(nil).should be_nil
+    end
+  end
+  
+  describe "#default_mappings" do
+    it "returns id when no class defined" do
+      indexer_clazz.new.default_fields.should == ["id"]
+    end
+    
+    it "adds type when class defined" do
+      indexer_clazz.clazz Integer
+      indexer_clazz.new.default_fields.should == ["id", %("Integer" AS type_s)]
+    end
+  end
+  
+  describe "#defined_fields" do
+    let(:field_definitions) { { :title => { :type => :string } } }
+    
+    it "calls field_definitions" do
+      indexer_clazz.should_receive(:field_definitions).and_return field_definitions
+      custom_indexer.defined_fields
+    end
+    
+    ["title AS title_t", "artist_id AS artist_id_i", "description AS description_t", 
+      %(IF(created_at IS NULL, NULL, CONCAT(REPLACE(created_at, " ", "T"), "Z")) AS created_at_dt)
+    ].each do |field|
+      it "includes field #{field.inspect}" do
+        custom_indexer.defined_fields.should include(field)
+      end
+    end
+    
+    it "does not include virtual fields" do
+      clazz = Class.new(Supernova::SolrIndexer)
+      clazz.has :location, :type => :location, :virtual => true
+      clazz.has :title, :type => :string
+      clazz.new.defined_fields.should == ["title AS title_s"]
+    end
+  end
+  
+  describe "#table_name" do
+    it "returns nil when no table_name defined on indexer class and no class defined" do
+      Class.new(Supernova::SolrIndexer).new.table_name.should be_nil
+    end
+    
+    it "returns nil when no table_name defined on indexer class and class does not respond to table name" do
+      clazz = Class.new(Supernova::SolrIndexer)
+      clazz.clazz(Integer)
+      clazz.new.table_name.should be_nil
+    end
+    
+    it "returns the table name defined in indexer class" do
+      clazz = Class.new(Supernova::SolrIndexer)
+      clazz.table_name(:some_table)
+      clazz.new.table_name.should == :some_table
+    end
+    
+    it "returns the table name ob class when responding to table_name" do
+      model_clazz = double("clazz", :table_name => "model_table")
+      clazz = Class.new(Supernova::SolrIndexer)
+      clazz.clazz(model_clazz)
+      clazz.new.table_name.should == "model_table"
+    end
+  end
+
+  describe "#query_to_index" do
+    before(:each) do
+      @indexer_clazz = Class.new(Supernova::SolrIndexer)
+      @indexer_clazz.clazz Integer
+      @indexer_clazz.table_name "integers"
+      @indexer = @indexer_clazz.new
+    end
+    
+    it "raises an error when table_name returns nil" do
+      @indexer_clazz.clazz(nil)
+      @indexer_clazz.table_name(nil)
+      @indexer.should_receive(:table_name).and_return nil
+      lambda {
+        @indexer.query_to_index
+      }.should raise_error("no table_name defined")
+    end
+    
+    it "returns a string" do
+      @indexer.query_to_index.should be_an_instance_of(String)
+    end
+    
+    it "does not include a where when ids is nil" do
+      @indexer.query_to_index.should_not include("WHERE")
+    end
+    
+    it "does include a where when ids are present" do
+      @indexer_clazz.new(:ids => %w(1 2)).query_to_index.should include("WHERE id IN (1, 2)")
+    end
+    
+    it "calls and includes select_fields" do
+      @indexer.should_receive(:select_fields).and_return %w(a c)
+      @indexer.query_to_index.should include("SELECT a, c FROM integers")
+    end
+  end
+  
+  describe "#select_fields" do
+    it "joins default_fields with defined_fields" do
+      default = double("default fields")
+      defined = double("defined fields")
+      indexer.should_receive(:default_fields).and_return [default]
+      indexer.should_receive(:defined_fields).and_return [defined]
+      indexer.select_fields.should == [default, defined]
     end
   end
 end
