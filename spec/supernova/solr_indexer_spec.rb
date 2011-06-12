@@ -262,6 +262,11 @@ describe Supernova::SolrIndexer do
       blank_indexer_clazz.field_definitions.should == { :artist_id => { :type => :integer, :sortable => true } }
     end
     
+    it "has can also be called with a symbol as argument and sets that to the type" do
+      blank_indexer_clazz.has(:artist_id, :integer)
+      blank_indexer_clazz.field_definitions.should == { :artist_id => { :type => :integer } }
+    end
+    
     it "clazz sets indexed class" do
       blank_indexer_clazz.clazz(Integer)
       blank_indexer_clazz.instance_variable_get("@clazz").should == Integer

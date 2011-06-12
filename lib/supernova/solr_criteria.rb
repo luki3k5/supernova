@@ -48,6 +48,15 @@ class Supernova::SolrCriteria < Supernova::Criteria
     Supernova::SolrIndexer.solr_field_for_field_name_and_mapping(field, search_options[:attribute_mapping])
   end
   
+  def reverse_lookup_solr_field(solr_field)
+    if search_options[:attribute_mapping]
+      search_options[:attribute_mapping].each do |field, options|
+        return field if solr_field.to_s == solr_field_from_field(field)
+      end
+    end
+    solr_field
+  end
+  
   def fq_from_with(with)
     if with.blank?
       []
@@ -85,12 +94,22 @@ class Supernova::SolrCriteria < Supernova::Criteria
       if key == "id"
         doc.id = value.to_s.split("/").last if doc.respond_to?(:id=)
       else
-        doc.send(:"#{key}=", value) if doc.respond_to?(:"#{key}=")
+        set_first_responding_attribute(doc, key, value)
       end
     end
     doc.instance_variable_set("@readonly", true)
     doc.instance_variable_set("@new_record", false)
     doc
+  end
+  
+  def set_first_responding_attribute(doc, solr_key, value)
+    [reverse_lookup_solr_field(solr_key), solr_key].each do |key|
+      meth = :"#{key}="
+      if doc.respond_to?(meth)
+        doc.send(meth, value)
+        return
+      end
+    end
   end
   
   def to_a

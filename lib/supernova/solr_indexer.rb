@@ -12,7 +12,7 @@ class Supernova::SolrIndexer
     end
     
     def has(key, attributes)
-      field_definitions[key] = attributes
+      field_definitions[key] = attributes.is_a?(Hash) ? attributes : { :type => attributes }
     end
     
     def clazz(class_name =:only_return)

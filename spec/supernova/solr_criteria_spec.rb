@@ -1,4 +1,5 @@
 require 'spec_helper'
+require "ostruct"
 
 describe Supernova::SolrCriteria do
   let(:criteria) { Supernova::SolrCriteria.new }
@@ -286,6 +287,13 @@ describe Supernova::SolrCriteria do
       criteria.build_doc(docs.first).should_not be_a_new_record
     end
     
+    it "uses attribute_mapping when defined" do
+      criteria.attribute_mapping(:enabled => { :type => :boolean }, :popularity => { :type => :integer })
+      doc = criteria.build_doc("type" => "Offer", "id" => "offers/1", "enabled_b" => true, "popularity_i" => 10)
+      doc.should be_an_instance_of(Offer)
+      doc.popularity.should == 10
+    end
+    
     class MongoOffer
       attr_accessor :id
     end
@@ -298,6 +306,35 @@ describe Supernova::SolrCriteria do
       doc = criteria.build_doc("id" => "offers/4df08c30f3b0a72e7c227a55")
       doc.should be_an_instance_of(Hash)
       doc["id"].should == "offers/4df08c30f3b0a72e7c227a55"
+    end
+  end
+  
+  describe "#reverse_lookup_solr_field" do
+    it "returns the key when no mapping found" do
+      Supernova::SolrCriteria.new.reverse_lookup_solr_field(:artist_id_s).should == :artist_id_s
+    end
+    
+    it "returns the correct original key when mapped" do
+      criteria.attribute_mapping(:artist_name => { :type => :string }).reverse_lookup_solr_field(:artist_name_s).should == :artist_name
+    end
+  end
+  
+  describe "#set_first_responding_attribute" do
+    it "sets the reverse looked up attribute when found" do
+      doc = OpenStruct.new(:artist_name => nil)
+      criteria.attribute_mapping(:artist_name => { :type => :string }).set_first_responding_attribute(doc, :artist_name_s, "Mos Def")
+      doc.artist_name.should == "Mos Def"
+    end
+    
+    it "sets the original key when no mapping defined" do
+      doc = OpenStruct.new(:artist_name_s => nil)
+      criteria.attribute_mapping(:artist_name => { :type => :string }).set_first_responding_attribute(doc, :artist_name_s, "Mos Def")
+      doc.artist_name_s.should == "Mos Def"
+    end
+    
+    it "does not break on unknown keys" do
+      doc = double("dummy")
+      criteria.attribute_mapping(:artist_name => { :type => :string }).set_first_responding_attribute(doc, :artist_name_s, "Mos Def")
     end
   end
   
