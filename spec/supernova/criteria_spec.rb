@@ -223,6 +223,10 @@ describe "Supernova::Criteria" do
       new_crit.merge(criteria).search_options[:search].should == ["New Search"]
     end
     
+    it "correctly merges select statements" do
+      Supernova::Criteria.new.select(:title).merge(Supernova::Criteria.new.select(:name)).search_options[:select].should == [:title, :name]
+    end
+    
     it "correctly merges the named_scope_class" do
       new_crit.named_scope_class(String)
       new_crit.merge(criteria).search_options[:named_scope_class].should == String

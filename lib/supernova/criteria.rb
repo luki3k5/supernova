@@ -126,6 +126,9 @@ class Supernova::Criteria
     if value.is_a?(Hash)
       reference[key] ||= Hash.new
       reference[key].merge!(value)
+    elsif key == :select
+      reference[key] ||= Array.new
+      reference[key] += (value || [])
     else
       reference[key] = value
     end
