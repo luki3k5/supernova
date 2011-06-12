@@ -188,6 +188,13 @@ describe "Supernova::Criteria" do
     end
   end
   
+  describe "#attribute_mapping" do
+    it "sets the attribute_mapping option" do
+      mapping = { :title => { :type => :integer } }
+      scope.attribute_mapping(mapping).search_options[:attribute_mapping].should == mapping
+    end
+  end
+  
   describe "#merge" do
     let(:criteria) { Supernova::Criteria.new.order("popularity asc").with(:a => 1).conditions(:b => 2).search("New Search") }
     let(:new_crit) { Supernova::Criteria.new.order("popularity desc").with(:c => 8).conditions(:e => 9).search("Search") }

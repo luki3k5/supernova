@@ -398,4 +398,44 @@ describe Supernova::SolrIndexer do
       indexer.select_fields.should == [default, defined]
     end
   end
+  
+  describe "#method_missing" do
+    it "returns a new supernova criteria" do
+      indexer_clazz.where(:a => 1).should be_an_instance_of(Supernova::SolrCriteria)
+    end
+    
+    it "sets the correct clazz" do
+      indexer_clazz = Class.new(Supernova::SolrIndexer)
+      indexer_clazz.clazz(String)
+      indexer_clazz.where(:a => 1).clazz.should == String
+    end
+    
+    it "adds the attribute_mapping" do
+      indexer_clazz.where(:a => 1).search_options[:attribute_mapping].should == {
+        :artist_id=>{:type=>:integer}, :title=>{:type=>:text}, :created_at=>{:type=>:date}, :description=>{:type=>:text}
+      }
+    end
+  end
+  
+  describe "#solr_field_for_field_name_and_mapping" do
+    let(:mapping) do 
+      { 
+        :artist_name => { :type => :string },
+        :artist_id => { :type => :integer },
+      }
+    end
+    
+    { 
+      :artist_name => "artist_name_s", "artist_name" => "artist_name_s", 
+      :artist_id => "artist_id_i", :popularity => "popularity" 
+    }.each do |from, to|
+      it "maps #{from} to #{to}" do
+        Supernova::SolrIndexer.solr_field_for_field_name_and_mapping(from, mapping).should == to
+      end
+    end
+    
+    it "returns the original field when mapping is nil" do
+      Supernova::SolrIndexer.solr_field_for_field_name_and_mapping(:artist, nil).should == "artist"
+    end
+  end
 end

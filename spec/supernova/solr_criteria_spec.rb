@@ -46,6 +46,17 @@ describe Supernova::SolrCriteria do
       criteria.order("title").to_params[:sort].should == "title"
     end
     
+    it "uses a mapped field for order" do
+      criteria.attribute_mapping(:title => { :type => :string }).order("title").to_params[:sort].should == "title_s"
+    end
+    
+    %w(asc desc).each do |order|
+      it "uses a mapped field for order even when #{order} is present" do
+        criteria.attribute_mapping(:title => { :type => :string }).order("title #{order}").to_params[:sort].should == "title_s #{order}"
+      end
+    end
+    
+    
     it "sets search correct search query" do
       criteria.search("some query").to_params[:q].should == "(some query)"
     end
@@ -54,6 +65,7 @@ describe Supernova::SolrCriteria do
       criteria.search("some", "query").to_params[:q].should == "(some) AND (query)"
     end
     
+    # fix me: use type_s
     it "adds a filter on type when clazz set" do
       Supernova::SolrCriteria.new(Offer).to_params[:fq].should == ["type:#{Offer}"]
     end
@@ -66,9 +78,21 @@ describe Supernova::SolrCriteria do
       criteria.select(:user_id).select(:user_id).select(:enabled).to_params[:fl].should == "user_id,enabled,id"
     end
     
+    it "uses mapped fields for select" do
+      mapping = {
+        :user_id => { :type => :integer },
+        :enabled => { :type => :boolean }
+      }
+      criteria.attribute_mapping(mapping).select(:user_id, :enabled).to_params[:fl].should == "user_id_i,enabled_b,id"
+    end
+    
     it "adds all without filters" do
       criteria.without(:user_id => 1).to_params[:fq].should == ["!user_id:1"]
       criteria.without(:user_id => 1).without(:user_id => 1).without(:user_id => 2).to_params[:fq].sort.should == ["!user_id:1", "!user_id:2"]
+    end
+    
+    it "uses mapped fields for without" do
+      criteria.attribute_mapping(:user_id => { :type => :integer }).without(:user_id => 1).to_params[:fq].should == ["!user_id_i:1"]
     end
     
     describe "with a nearby search" do
@@ -83,7 +107,11 @@ describe Supernova::SolrCriteria do
       end
       
       it "sets the sfield to location" do
-        nearby_criteria.to_params[:sfield].should == :location
+        nearby_criteria.to_params[:sfield].should == "location"
+      end
+      
+      it "uses the mapped field when mapping defined" do
+        nearby_criteria.attribute_mapping(:location => { :type => :location }).to_params[:sfield].should == "location_p"
       end
       
       it "sets the fq field to {!geofilt}" do
@@ -107,6 +135,30 @@ describe Supernova::SolrCriteria do
       it "sets the correct start when page is 1" do
         criteria.paginate(:per_page => 10, :page => 2).to_params[:start].should == 10
       end
+    end
+    
+    describe "with attribute mapping" do
+      it "uses the mapped fields" do
+        criteria.attribute_mapping(:artist_name => { :type => :string }).where(:artist_name => "test").to_params[:fq].should == ["artist_name_s:test"]
+      end
+      
+      it "uses the mapped fields for all criteria queries" do
+        criteria.attribute_mapping(:artist_name => { :type => :string }).where(:artist_name.ne => nil).to_params[:fq].should == ["artist_name_s:[* TO *]"]
+      end
+      
+      it "uses the column when no mapping defined" do
+        criteria.where(:artist_name => "test").to_params[:fq].should == ["artist_name:test"]
+      end
+    end
+  end
+  
+  describe "#solr_field_from_field" do
+    it "returns the field when no mappings defined" do
+      criteria.solr_field_from_field(:artist_name).should == "artist_name"
+    end
+    
+    it "returns the mapped field when mapping found" do
+      criteria.attribute_mapping(:artist_name => { :type => :string }).solr_field_from_field(:artist_name).should == "artist_name_s"
     end
   end
 

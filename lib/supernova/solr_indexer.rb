@@ -22,6 +22,15 @@ class Supernova::SolrIndexer
       @table_name = name if name != :only_return
       @table_name
     end
+    
+    def method_missing(*args)
+      criteria = Supernova::SolrCriteria.new(self.clazz).attribute_mapping(self.field_definitions)
+      if criteria.respond_to?(args.first)
+        criteria.send(*args)
+      else
+        super
+      end
+    end
   end
   
   FIELD_SUFFIX_MAPPING = {
@@ -98,11 +107,19 @@ class Supernova::SolrIndexer
   
   def sql_column_from_field_and_type(field, type)
     return sql_date_column_from_field(field) if type == :date
-    if suffix = FIELD_SUFFIX_MAPPING[type.to_sym]
+    if suffix = self.class.suffix_from_type(type)
       "#{field} AS #{field}_#{suffix}"
     else
       raise "no suffix for #{type} defined"
     end
+  end
+  
+  def self.suffix_from_type(type)
+    FIELD_SUFFIX_MAPPING[type.to_sym]
+  end
+  
+  def self.solr_field_for_field_name_and_mapping(field, mapping)
+    [field, mapping && mapping[field.to_sym] ? suffix_from_type(mapping[field.to_sym][:type]) : nil].compact.join("_")
   end
   
   def sql_date_column_from_field(field)

@@ -28,6 +28,10 @@ class Supernova::Criteria
   def for_classes(clazzes)
     merge_filters :classes, [clazzes].flatten
   end
+  
+  def attribute_mapping(mapping)
+    merge_search_options :attribute_mapping, mapping
+  end
 
   def order(order_option)
     merge_search_options :order, order_option

@@ -6,11 +6,11 @@ class Supernova::SolrCriteria < Supernova::Criteria
     solr_options = { :fq => [], :q => "*:*" }
     solr_options[:fq] += fq_from_with(self.filters[:with])
     if self.filters[:without]
-     self.filters[:without].each do |key, values| 
-       solr_options[:fq] += values.map { |value| "!#{key}:#{value}" }
+     self.filters[:without].each do |field, values| 
+       solr_options[:fq] += values.map { |value| "!#{solr_field_from_field(field)}:#{value}" }
      end
     end
-    solr_options[:sort] = self.search_options[:order] if self.search_options[:order]
+    solr_options[:sort] = convert_search_order(self.search_options[:order]) if self.search_options[:order]
     if self.search_options[:search].is_a?(Array)
       solr_options[:q] = self.search_options[:search].map { |query| "(#{query})" }.join(" AND ")
     end
@@ -18,12 +18,12 @@ class Supernova::SolrCriteria < Supernova::Criteria
     if self.search_options[:geo_center] && self.search_options[:geo_distance]
       solr_options[:pt] = "#{self.search_options[:geo_center][:lat]},#{self.search_options[:geo_center][:lng]}"
       solr_options[:d] = self.search_options[:geo_distance].to_f / Supernova::KM_TO_METER
-      solr_options[:sfield] = :location
+      solr_options[:sfield] = solr_field_from_field(:location)
       solr_options[:fq] << "{!geofilt}"
     end
     if self.search_options[:select]
       self.search_options[:select] << :id
-      solr_options[:fl] = self.search_options[:select].compact.join(",") 
+      solr_options[:fl] = self.search_options[:select].compact.map { |field| solr_field_from_field(field) }.join(",") 
     end
     solr_options[:fq] << "type:#{self.clazz}" if self.clazz
     
@@ -34,12 +34,31 @@ class Supernova::SolrCriteria < Supernova::Criteria
     solr_options
   end
   
+  def convert_search_order(order)
+    asc_or_desc = nil
+    field = solr_field_from_field(order)
+    if order.match(/^(.*?) (asc|desc)/i)
+      field = solr_field_from_field($1)
+      asc_or_desc = $2
+    end
+    [field, asc_or_desc].compact.join(" ")
+  end
+  
+  def solr_field_from_field(field)
+    Supernova::SolrIndexer.solr_field_for_field_name_and_mapping(field, search_options[:attribute_mapping])
+  end
+  
   def fq_from_with(with)
     if with.blank?
       []
     else
-      with.map do |key, value|
-        key.respond_to?(:solr_filter_for) ? key.solr_filter_for(value) : fq_filter_for_key_and_value(key, value)
+      with.map do |key_or_condition, value|
+        if key_or_condition.respond_to?(:solr_filter_for)
+          key_or_condition.key = solr_field_from_field(key_or_condition.key)
+          key_or_condition.solr_filter_for(value)
+        else
+          fq_filter_for_key_and_value(solr_field_from_field(key_or_condition), value)
+        end
       end
     end
   end
