@@ -301,7 +301,7 @@ describe Supernova::SolrIndexer do
     
     it "adds type when class defined" do
       indexer_clazz.clazz Integer
-      indexer_clazz.new.default_fields.should == ["id", %("Integer" AS type_s)]
+      indexer_clazz.new.default_fields.should == ["id", %("Integer" AS type)]
     end
   end
   

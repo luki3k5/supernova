@@ -82,7 +82,7 @@ class Supernova::SolrIndexer
   
   def default_fields
     fields = ["id"]
-    fields << %("#{self.class.clazz}" AS type_s) if self.class.clazz
+    fields << %("#{self.class.clazz}" AS type) if self.class.clazz
     fields
   end
   
