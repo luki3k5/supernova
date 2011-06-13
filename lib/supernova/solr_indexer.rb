@@ -48,7 +48,8 @@ class Supernova::SolrIndexer
     :float => :f,
     :date => :dt,
     :boolean => :b,
-    :location => :p
+    :location => :p,
+    :double => :d
   }
   
   def initialize(options = {})

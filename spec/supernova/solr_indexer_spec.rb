@@ -97,6 +97,7 @@ describe Supernova::SolrIndexer do
       [:lat, :float] => "lat AS lat_f",
       [:text, :boolean] => "text AS text_b",
       [:loc, :location] => "loc AS loc_p",
+      [:big_int, :double] => "big_int AS big_int_d",
       [:deleted_at, :date] => %(IF(deleted_at IS NULL, NULL, CONCAT(REPLACE(deleted_at, " ", "T"), "Z")) AS deleted_at_dt),
     }.each do |(field, type), name|
       it "maps #{field} with #{type} to #{name}" do
