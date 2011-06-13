@@ -268,6 +268,12 @@ describe Supernova::SolrCriteria do
       end
     end
     
+    it "updates the attributes hash when defined" do
+      atts = { "type" => "Offer", "some_other" => "Test", "id" => "offers/1", "enabled" => false, "popularity" => 10 }
+      doc = criteria.build_doc(atts)
+      doc.instance_variable_get("@attributes").should == { "popularity" => 10, "enabled" => false, "id" => "1", "some_other" => "Test"}
+    end
+    
     it "returns a Hash when type does not response to " do
       type = double("type")
       type.should_receive(:respond_to?).with(:constantize).and_return false

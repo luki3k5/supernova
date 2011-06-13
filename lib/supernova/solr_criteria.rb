@@ -90,16 +90,28 @@ class Supernova::SolrCriteria < Supernova::Criteria
     return hash if !hash["type"].respond_to?(:constantize)
     doc = hash["type"].constantize.new
     doc.instance_variable_set("@solr_doc", hash)
-    hash.each do |key, value|
-      if key == "id"
-        doc.id = value.to_s.split("/").last if doc.respond_to?(:id=)
-      else
-        set_first_responding_attribute(doc, key, value)
+    atts = convert_doc_attributes(hash)
+    if doc.instance_variables.include?("@attributes")
+      doc.instance_variable_set("@attributes", atts.except("type"))
+    else
+      atts.each do |key, value|
+        doc.send(:"#{key}=", value) if doc.respond_to?(:"#{key}=")
       end
     end
     doc.instance_variable_set("@readonly", true)
     doc.instance_variable_set("@new_record", false)
     doc
+  end
+  
+  def convert_doc_attributes(hash)
+    hash.inject({}) do |ret, (key, value)|
+      if key == "id"
+        ret["id"] = value.to_s.split("/").last
+      else
+        ret[reverse_lookup_solr_field(key).to_s] = value
+      end
+      ret
+    end
   end
   
   def set_first_responding_attribute(doc, solr_key, value)
