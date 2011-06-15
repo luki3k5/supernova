@@ -103,14 +103,27 @@ class Supernova::SolrCriteria < Supernova::Criteria
     doc
   end
   
+  # called in build doc, all hashes have strings as keys!!!
   def convert_doc_attributes(hash)
-    hash.inject({}) do |ret, (key, value)|
+    converted_hash = hash.inject({}) do |ret, (key, value)|
       if key == "id"
         ret["id"] = value.to_s.split("/").last
       else
         ret[reverse_lookup_solr_field(key).to_s] = value
       end
       ret
+    end
+    self.select_fields.each do |select_field|
+      converted_hash[select_field.to_s] = nil if !converted_hash.has_key?(select_field.to_s)
+    end
+    converted_hash
+  end
+  
+  def select_fields
+    if self.search_options[:select].present?
+      self.search_options[:select]
+    else
+      self.search_options[:named_scope_class].respond_to?(:select_fields) ? self.search_options[:named_scope_class].select_fields : []
     end
   end
   

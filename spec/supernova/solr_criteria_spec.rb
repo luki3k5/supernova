@@ -255,29 +255,42 @@ describe Supernova::SolrCriteria do
   end
   
   describe "#build_doc" do
+    class OfferIndex < Supernova::SolrIndexer
+      has :enabled, :type => :boolean
+      has :popularity, :type => :integer
+      has :is_deleted, :type => :boolean, :virtual => true
+      clazz Offer
+    end
+    
+    
     { "Offer" => Offer, "Host" => Host }.each do |type, clazz|
       it "returns the #{clazz} for #{type.inspect}" do
         criteria.build_doc("type" => type).should be_an_instance_of(clazz)
       end
     end
     
-    { :popularity => 10, :enabled => false, :id => 1 }.each do |key, value|
-      it "sets #{key} to #{value}" do
-        doc = criteria.build_doc("type" => "Offer", "some_other" => "Test", "id" => "offers/1", "enabled" => false, "popularity" => 10)
-        doc.send(key).should == value
-      end
+    it "calls convert_doc_attributes" do
+      row = { "type" => "Offer", "id" => "offers/1" }
+      criteria.should_receive(:convert_doc_attributes).with(row).and_return row
+      criteria.build_doc(row)
     end
     
-    it "updates the attributes hash when defined" do
-      atts = { "type" => "Offer", "some_other" => "Test", "id" => "offers/1", "enabled" => false, "popularity" => 10 }
-      doc = criteria.build_doc(atts)
-      doc.instance_variable_get("@attributes").should == { "popularity" => 10, "enabled" => false, "id" => "1", "some_other" => "Test"}
-    end
-    
-    it "returns a Hash when type does not response to " do
+    it "returns the original hash when no type given" do
       type = double("type")
+      row = { "id" => "offers/1", "type" => type }
       type.should_receive(:respond_to?).with(:constantize).and_return false
-      criteria.build_doc("type" => type).should be_an_instance_of(Hash)
+      criteria.should_not_receive(:convert_doc_attributes)
+      criteria.build_doc(row).should == row
+    end
+    
+    it "assigns the attributes returned from convert_doc_attributes to attributes when instance variable exists" do
+      str = String.new
+      str.instance_variable_set("@attributes", {})
+      atts = { :title => "Hello" }
+      row = { "type" => "Offer" }
+      criteria.should_receive(:convert_doc_attributes).with(row).and_return atts
+      doc = criteria.build_doc(row)
+      doc.instance_variable_get("@attributes").should == atts
     end
     
     it "sets the original solr_doc" do
@@ -293,25 +306,69 @@ describe Supernova::SolrCriteria do
       criteria.build_doc(docs.first).should_not be_a_new_record
     end
     
-    it "uses attribute_mapping when defined" do
+    it "returns an offer and sets all given parameters" do
       criteria.attribute_mapping(:enabled => { :type => :boolean }, :popularity => { :type => :integer })
       doc = criteria.build_doc("type" => "Offer", "id" => "offers/1", "enabled_b" => true, "popularity_i" => 10)
       doc.should be_an_instance_of(Offer)
       doc.popularity.should == 10
     end
     
+    it "sets selected parameters even when nil" do
+      doc = criteria.select(:enabled, :popularity).build_doc("type" => "Offer", "id" => "offers/1")
+      doc.enabled.should be_nil
+      doc.popularity.should be_nil
+    end
+    
+    it "it sets parameters to nil when no select given and not present" do
+      doc = OfferIndex.search_scope.build_doc("type" => "Offer", "id" => "offers/1")
+      doc.should be_an_instance_of(Offer)
+      doc.popularity.should be_nil
+    end
+    
+    it "does not set virtual parameters to nil" do
+      OfferIndex.search_scope.build_doc("type" => "Offer", "id" => "offers/1").attributes.should_not have_key(:is_deleted)
+      OfferIndex.search_scope.build_doc("type" => "Offer", "id" => "offers/1").attributes.should_not have_key("is_deleted")
+    end
+  end
+  
+  describe "#select_fields" do
+    it "returns the fields from search_options when defined" do
+      criteria.select(:enabled).select_fields.should == [:enabled]
+    end
+    
+    it "returns the select_fields from named_search_scope when assigned and responding to" do
+      fields = double("fields")
+      nsc = double("scope", :select_fields => fields)
+      criteria.named_scope_class(nsc)
+      criteria.select_fields.should == fields
+    end
+    
+    it "returns an empty array by default" do
+      criteria.select_fields.should be_empty
+    end
+  end
+  
+  describe "#convert_doc_attributes" do
+    { "popularity" => 10, "enabled" => false, "id" => "1" }.each do |key, value|
+      it "sets #{key} to #{value}" do
+        criteria.convert_doc_attributes("type" => "Offer", "some_other" => "Test", "id" => "offers/1", "enabled" => false, "popularity" => 10)[key].should == value
+      end
+    end
+    
+    { "popularity" => 10, "enabled" => true, "id" => "1" }.each do |field, value|
+      it "uses sets #{field} to #{value}" do
+        criteria.attribute_mapping(:enabled => { :type => :boolean }, :popularity => { :type => :integer })
+        criteria.convert_doc_attributes("type" => "Offer", "id" => "offers/1", "enabled_b" => true, "popularity_i" => 10)[field].should == value
+      end
+    end
+  
+    
     class MongoOffer
       attr_accessor :id
     end
     
     it "would also work with mongoid ids" do
-      criteria.build_doc("type" => "MongoOffer", "id" => "offers/4df08c30f3b0a72e7c227a55").id.should == "4df08c30f3b0a72e7c227a55"
-    end
-    
-    it "uses OpenStruct when type is not given" do
-      doc = criteria.build_doc("id" => "offers/4df08c30f3b0a72e7c227a55")
-      doc.should be_an_instance_of(Hash)
-      doc["id"].should == "offers/4df08c30f3b0a72e7c227a55"
+      criteria.convert_doc_attributes("type" => "MongoOffer", "id" => "offers/4df08c30f3b0a72e7c227a55")["id"].should == "4df08c30f3b0a72e7c227a55"
     end
   end
   

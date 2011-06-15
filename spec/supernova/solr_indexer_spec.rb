@@ -406,6 +406,22 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  describe "SolrIndexer.select_fields" do
+    it "returns the keys of the field definitions" do
+      Supernova::SolrIndexer.should_receive(:field_definitions).and_return(
+        { :title => { :type => :string }, :popularity => { :type => :integer } }
+      )
+      Supernova::SolrIndexer.select_fields.map(&:to_s).sort.should == %w(popularity title)
+    end
+    
+    it "does not include virtual attributes" do
+      Supernova::SolrIndexer.should_receive(:field_definitions).and_return(
+        { :title => { :type => :string }, :popularity => { :type => :integer }, :is_deleted => { :virtual => true, :type => :integer } }
+      )
+      Supernova::SolrIndexer.select_fields.map(&:to_s).sort.should == %w(popularity title)
+    end
+  end
+  
   describe "#method_missing" do
     it "returns a new supernova criteria" do
       indexer_clazz.where(:a => 1).should be_an_instance_of(Supernova::SolrCriteria)

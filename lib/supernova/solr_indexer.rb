@@ -11,6 +11,12 @@ class Supernova::SolrIndexer
       @field_definitions ||= {}
     end
     
+    def select_fields
+      field_definitions.map do |key, attributes|
+        attributes[:virtual] != true ? key : nil
+      end.compact
+    end
+    
     def has(key, attributes)
       field_definitions[key] = attributes.is_a?(Hash) ? attributes : { :type => attributes }
     end
