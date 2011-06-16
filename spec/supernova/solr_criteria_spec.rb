@@ -177,7 +177,7 @@ describe Supernova::SolrCriteria do
     end
     
     it "calls get with select and params" do
-      rsolr.should_receive(:post).with("select", :params => params).and_return solr_response
+      rsolr.should_receive(:post).with("select", :data => params).and_return solr_response
       criteria.to_a
     end
     
