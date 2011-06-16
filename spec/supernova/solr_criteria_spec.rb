@@ -168,7 +168,7 @@ describe Supernova::SolrCriteria do
     
     before(:each) do
       criteria.stub(:to_params).and_return params
-      rsolr.stub!(:get).and_return solr_response
+      rsolr.stub!(:post).and_return solr_response
     end
     
     it "calls to_params" do
@@ -177,7 +177,7 @@ describe Supernova::SolrCriteria do
     end
     
     it "calls get with select and params" do
-      rsolr.should_receive(:get).with("select", :params => params).and_return solr_response
+      rsolr.should_receive(:post).with("select", :params => params).and_return solr_response
       criteria.to_a
     end
     
