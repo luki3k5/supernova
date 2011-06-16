@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{supernova}
-  s.version = "0.3.8"
+  s.version = "0.3.9"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tobias Schwab"]
-  s.date = %q{2011-06-15}
+  s.date = %q{2011-06-16}
   s.description = %q{Unified search scopes}
   s.email = %q{tobias.schwab@dynport.de}
   s.extra_rdoc_files = [
