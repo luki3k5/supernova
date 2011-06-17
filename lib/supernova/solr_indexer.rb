@@ -1,8 +1,11 @@
 require "json"
+require "fileutils"
 
 class Supernova::SolrIndexer
-  attr_accessor :options, :db, :ids
+  attr_accessor :options, :db, :ids, :max_rows_to_direct_index, :local_solr
   attr_writer :index_file_path
+  
+  MAX_ROWS_TO_DIRECT_INDEX = 100
   
   include Supernova::Solr
   
@@ -62,6 +65,7 @@ class Supernova::SolrIndexer
     options.each do |key, value|
       self.send(:"#{key}=", value) if self.respond_to?(:"#{key}=")
     end
+    self.max_rows_to_direct_index ||= MAX_ROWS_TO_DIRECT_INDEX
     self.options = options
     self.ids ||= :all
   end
@@ -143,8 +147,23 @@ class Supernova::SolrIndexer
   end
   
   def index_query(query)
-    query_db(query).each do |row|
-      yield(row) if block_given?
+    rows = query_db(query)
+    if self.max_rows_to_direct_index < rows.count
+      index_with_json_file(rows)
+    else
+      index_directly(rows)
+    end
+  end
+  
+  def index_directly(rows)
+    rows.each do |row|
+      Supernova::Solr.connection.add(row)
+    end
+    Supernova::Solr.connection.commit if rows.any?
+  end
+  
+  def index_with_json_file(rows)
+    rows.each do |row|
       write_to_file(row)
     end
     finish
@@ -187,16 +206,18 @@ class Supernova::SolrIndexer
   end
   
   def solr_url
-    Supernova::Solr.url
+    Supernova::Solr.url.present? ? Supernova::Solr.url.to_s.gsub(/\/$/, "") : nil
   end
   
   def do_index_file(options = {})
     raise "solr not configured" if solr_url.nil?
-    cmd = if options[:local]
+    cmd = if self.local_solr
       %(curl -s '#{solr_url}/update/json?commit=true\\&stream.file=#{index_file_path}')
     else
       %(cd #{File.dirname(index_file_path)} && curl -s '#{solr_url}/update/json?commit=true' --data-binary @#{File.basename(index_file_path)} -H 'Content-type:application/json')
     end
-    Kernel.send(:`, cmd)
+    out = Kernel.send(:`, cmd)
+    FileUtils.rm_f(self.index_file_path) if out.to_s.include?(%(<int name=\"status\">0</int>))
+    out
   end
 end

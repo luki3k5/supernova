@@ -5,11 +5,11 @@ describe Supernova::SolrIndexer do
   let(:db) { double("db", :query => [to_index]) }
   let(:to_index) { { :id => 1, :title => "Some Title"} }
   let(:file_stub) { double("file").as_null_object }
+  let(:solr) { double("solr").as_null_object }
   
   let(:indexer) do
     indexer = Supernova::SolrIndexer.new
     indexer.db = db
-    Supernova::Solr.url = "http://solr.xx:9333/solr"
     indexer.stub!(:system).and_return true
     indexer
   end
@@ -17,6 +17,8 @@ describe Supernova::SolrIndexer do
   let(:custom_indexer) { indexer_clazz.new }
   
   before(:each) do
+    Supernova::Solr.url = "http://solr.xx:9333/solr"
+    Supernova::Solr.stub!(:connection).and_return solr
     indexer_clazz.has(:title, :type => :text)
     indexer_clazz.has(:artist_id, :type => :integer)
     indexer_clazz.has(:description, :type => :text)
@@ -46,6 +48,10 @@ describe Supernova::SolrIndexer do
     
     it "sets ids to all when nil" do
       Supernova::SolrIndexer.new.ids.should == :all
+    end
+    
+    it "sets max_rows_to_direct_index to 100" do
+      Supernova::SolrIndexer.new.max_rows_to_direct_index.should == 100
     end
   end
   
@@ -135,24 +141,78 @@ describe Supernova::SolrIndexer do
   describe "#index_query" do
     let(:query) { %(SELECT CONCAT("user_", id) AS id, title FROM people WHERE type = 'User') }
     
-    it "executes the query" do
-      indexer.should_receive(:query_db).with(query).and_return [to_index]
+    it "calls index_with_json_file when rows > max_rows_to_direct_index" do
+      indexer.max_rows_to_direct_index = 0
+      rows = [to_index]
+      indexer.should_receive(:query_db).with(query).and_return rows
+      indexer.should_receive(:index_with_json_file).with(rows)
       indexer.index_query(query)
     end
     
-    it "calls write_to_file on all rows" do
-      rows = [double("1"), double("2")]
-      indexer.stub(:query_db).and_return rows
-      indexer.should_receive(:write_to_file).with(rows.first)
-      indexer.should_receive(:write_to_file).with(rows.at(1))
-      indexer.stub!(:finish)
+    it "calls index_directly with rows when rows = max_rows_to_direct_index" do
+      indexer.max_rows_to_direct_index = 1
+      rows = [to_index]
+      indexer.should_receive(:query_db).with(query).and_return rows
+      indexer.should_receive(:index_directly).with(rows)
       indexer.index_query(query)
     end
     
-    it "calls finish" do
-      indexer.should_receive(:finish)
-      indexer.index_query(query)
+    describe "with number of rows > max_rows_to_direct_index" do
+      before(:each) do
+        indexer.max_rows_to_direct_index = 0
+      end
+      
+      it "calls max_rows_to_direct_index" do
+        indexer.should_receive(:max_rows_to_direct_index).and_return 0
+        indexer.index_query(query)
+      end
+      
+      it "executes the query" do
+        indexer.should_receive(:query_db).with(query).and_return [to_index]
+        indexer.index_query(query)
+      end
+
+      it "calls write_to_file on all rows" do
+        rows = [double("1"), double("2")]
+        indexer.stub(:query_db).and_return rows
+        indexer.should_receive(:write_to_file).with(rows.first)
+        indexer.should_receive(:write_to_file).with(rows.at(1))
+        indexer.stub!(:finish)
+        indexer.index_query(query)
+      end
+
+      it "calls finish" do
+        indexer.should_receive(:finish)
+        indexer.index_query(query)
+      end
     end
+  end
+  
+  describe "#index_directly" do
+    before(:each) do
+      Supernova::Solr.stub!(:connection).and_return solr
+    end
+    
+    it "calls the correct add statement" do
+      row1 = double("1")
+      row2 = double("2")
+      rows = [row1, row2]
+      solr.should_receive(:add).with(row1)
+      solr.should_receive(:add).with(row2)
+      indexer.index_directly(rows)
+    end
+    
+    it "calls commit" do
+      solr.should_receive(:commit)
+      indexer.index_directly([double("1")])
+    end
+    
+    it "does not call commit when rows is empty" do
+      solr.should_not_receive(:commit)
+      indexer.index_directly([])
+    end
+    
+    it "calls a block given given"
   end
   
   describe "#index_file_path" do
@@ -239,8 +299,22 @@ describe Supernova::SolrIndexer do
     end
     
     it "calls the correct curl command" do
-      indexer.index_file_path = "/tmp/some_path.json"
-      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'")
+      indexer = Supernova::SolrIndexer.new(:index_file_path => "/tmp/some_path.json", :local_solr => true)
+      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return "<\"status\">0"
+      indexer.do_index_file(:local => true)
+    end
+    
+    it "calls rm on file" do
+      indexer = Supernova::SolrIndexer.new(:index_file_path => "/tmp/some_path.json", :local_solr => true)
+      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return %(<int name="status">0</int>)
+      FileUtils.should_receive(:rm_f).with("/tmp/some_path.json")
+      indexer.do_index_file(:local => true)
+    end
+    
+    it "does not call rm when not successful" do
+      indexer = Supernova::SolrIndexer.new(:index_file_path => "/tmp/some_path.json", :local_solr => true)
+      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return %(<int name="status">1</int>)
+      FileUtils.should_not_receive(:rm_f).with("/tmp/some_path.json")
       indexer.do_index_file(:local => true)
     end
     
@@ -490,6 +564,13 @@ describe Supernova::SolrIndexer do
     
     it "returns the original field when mapping is nil" do
       Supernova::SolrIndexer.solr_field_for_field_name_and_mapping(:artist, nil).should == "artist"
+    end
+  end
+
+  describe "#solr_url" do
+    it "strips slashes from defined solr url" do
+      Supernova::Solr.url = "http://solr.xx:9333/solr/"
+      indexer.solr_url.should == "http://solr.xx:9333/solr"
     end
   end
 end

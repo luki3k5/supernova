@@ -31,6 +31,52 @@ describe "Solr" do
     Offer.search_scope
   end
   
+  describe "#indexing" do
+    before(:each) do
+      Supernova::Solr.truncate!
+      Supernova::Solr.connection.commit
+    end
+    
+    class OfferIndex < Supernova::SolrIndexer
+      has :user_id, :type => :integer
+      has :popularity, :type => :integer
+      
+      clazz Offer
+    end
+    
+    it "indexes all Offers without file" do
+      offer1 = Offer.create!(:user_id => 1, :popularity => 10)
+      offer2 = Offer.create!(:user_id => 2, :popularity => 20)
+      indexer = OfferIndex.new(:db => ActiveRecord::Base.connection)
+      indexer.index!
+      OfferIndex.search_scope.to_a.total_entries.should == 2
+      OfferIndex.search_scope.order("user_id desc").to_a.should == [offer2, offer1]
+      indexer.instance_variable_get("@index_file_path").should be_nil
+    end
+    
+    it "indexes with a file" do
+      offer1 = Offer.create!(:user_id => 1, :popularity => 10)
+      offer2 = Offer.create!(:user_id => 2, :popularity => 20)
+      indexer = OfferIndex.new(:db => ActiveRecord::Base.connection, :max_rows_to_direct_index => 0)
+      indexer.index!
+      indexer.instance_variable_get("@index_file_path").should_not be_nil
+      OfferIndex.search_scope.to_a.total_entries.should == 2
+      OfferIndex.search_scope.order("user_id desc").to_a.should == [offer2, offer1]
+      File.should_not be_exists(indexer.instance_variable_get("@index_file_path"))
+    end
+    
+    it "indexes with a local file" do
+      offer1 = Offer.create!(:user_id => 1, :popularity => 10)
+      offer2 = Offer.create!(:user_id => 2, :popularity => 20)
+      indexer = OfferIndex.new(:db => ActiveRecord::Base.connection, :max_rows_to_direct_index => 0, :local_solr => true)
+      indexer.index!
+      indexer.instance_variable_get("@index_file_path").should_not be_nil
+      OfferIndex.search_scope.to_a.total_entries.should == 2
+      OfferIndex.search_scope.order("user_id desc").to_a.should == [offer2, offer1]
+      File.should_not be_exists(indexer.instance_variable_get("@index_file_path"))
+    end
+  end
+  
   describe "searching" do
     it "returns the correct current_page when nil" do
       new_criteria.to_a.current_page.should == 1
@@ -60,11 +106,13 @@ describe "Solr" do
       end
     end
     
-    it "includes the returned solr_doc" do
-      new_criteria.search("text_t:Hans").to_a.first.instance_variable_get("@solr_doc").should == {
-        "id" => "offers/1", "type" => "Offer", "user_id_i" => 1, "enabled_b" => false, "text_t" => "Hans Meyer", "popularity_i" => 10, 
-        "location_p" => "47,11"
-      }
+    {
+      "id" => "offers/1", "type" => "Offer", "user_id_i" => 1, "enabled_b" => false, "text_t" => "Hans Meyer", 
+      "popularity_i" => 10, "location_p" => "47,11"
+    }.each do |key, value|
+      it "sets #{key} to #{value}" do
+        doc = new_criteria.search("text_t:Hans").to_a.first.instance_variable_get("@solr_doc")[key].should == value
+      end
     end
     
     describe "nearby search" do
