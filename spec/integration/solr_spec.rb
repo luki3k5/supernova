@@ -41,6 +41,11 @@ describe "Solr" do
       has :user_id, :type => :integer
       has :popularity, :type => :integer
       
+      def row_to_solr(row)
+        row["indexed_at_dt"] = Time.now.utc.iso8601
+        row
+      end
+      
       clazz Offer
     end
     
@@ -49,6 +54,7 @@ describe "Solr" do
       offer2 = Offer.create!(:user_id => 2, :popularity => 20)
       indexer = OfferIndex.new(:db => ActiveRecord::Base.connection)
       indexer.index!
+      OfferIndex.search_scope.to_a.first.instance_variable_get("@solr_doc")["indexed_at_dt"].should_not be_nil
       OfferIndex.search_scope.to_a.total_entries.should == 2
       OfferIndex.search_scope.order("user_id desc").to_a.should == [offer2, offer1]
       indexer.instance_variable_get("@index_file_path").should be_nil
@@ -61,6 +67,7 @@ describe "Solr" do
       indexer.index!
       indexer.instance_variable_get("@index_file_path").should_not be_nil
       OfferIndex.search_scope.to_a.total_entries.should == 2
+      OfferIndex.search_scope.to_a.first.instance_variable_get("@solr_doc")["indexed_at_dt"].should_not be_nil
       OfferIndex.search_scope.order("user_id desc").to_a.should == [offer2, offer1]
       File.should_not be_exists(indexer.instance_variable_get("@index_file_path"))
     end
@@ -71,6 +78,7 @@ describe "Solr" do
       indexer = OfferIndex.new(:db => ActiveRecord::Base.connection, :max_rows_to_direct_index => 0, :local_solr => true)
       indexer.index!
       indexer.instance_variable_get("@index_file_path").should_not be_nil
+      OfferIndex.search_scope.to_a.first.instance_variable_get("@solr_doc")["indexed_at_dt"].should_not be_nil
       OfferIndex.search_scope.to_a.total_entries.should == 2
       OfferIndex.search_scope.order("user_id desc").to_a.should == [offer2, offer1]
       File.should_not be_exists(indexer.instance_variable_get("@index_file_path"))
