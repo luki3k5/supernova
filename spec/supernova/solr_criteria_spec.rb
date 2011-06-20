@@ -163,7 +163,7 @@ describe Supernova::SolrCriteria do
     end
   end
 
-  describe "#to_a" do
+  describe "#execute" do
     let(:params) { double("params") }
     
     before(:each) do
@@ -173,45 +173,45 @@ describe Supernova::SolrCriteria do
     
     it "calls to_params" do
       criteria.should_receive(:to_params).and_return params
-      criteria.to_a
+      criteria.execute
     end
     
     it "calls get with select and params" do
       rsolr.should_receive(:post).with("select", :data => params).and_return solr_response
-      criteria.to_a
+      criteria.execute
     end
     
     it "returns a Supernova::Collection" do
-      criteria.to_a.should be_an_instance_of(Supernova::Collection)
+      criteria.execute.should be_an_instance_of(Supernova::Collection)
     end
     
     it "sets the correct page when page is nil" do
-      criteria.to_a.current_page.should == 1
+      criteria.execute.current_page.should == 1
     end
     
     it "sets the correct page when page is 1" do
-      criteria.paginate(:page => 1).to_a.current_page.should == 1
+      criteria.paginate(:page => 1).execute.current_page.should == 1
     end
     
     it "sets the correct page when page is 2" do
-      criteria.paginate(:page => 2).to_a.current_page.should == 2
+      criteria.paginate(:page => 2).execute.current_page.should == 2
     end
     
     it "sets the correct per_page when zero" do
-      criteria.paginate(:page => 2, :per_page => nil).to_a.per_page.should == 25
+      criteria.paginate(:page => 2, :per_page => nil).execute.per_page.should == 25
     end
     
     it "sets the custom per_page when given" do
-      criteria.paginate(:page => 2, :per_page => 10).to_a.per_page.should == 10
+      criteria.paginate(:page => 2, :per_page => 10).execute.per_page.should == 10
     end
     
     it "sets the correct total_entries" do
-      criteria.paginate(:page => 2, :per_page => 10).to_a.total_entries.should == 2
+      criteria.paginate(:page => 2, :per_page => 10).execute.total_entries.should == 2
     end
     
     it "calls build_docs with returned docs" do
       criteria.should_receive(:build_docs).with(docs).and_return []
-      criteria.to_a
+      criteria.execute
     end
     
     it "calls replace on collection wit returned docs" do
@@ -220,7 +220,7 @@ describe Supernova::SolrCriteria do
       built_docs = double("built docs")
       criteria.stub!(:build_docs).and_return built_docs
       col.should_receive(:replace).with(built_docs)
-      criteria.to_a
+      criteria.execute
     end
   end
   

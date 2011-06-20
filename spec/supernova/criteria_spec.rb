@@ -3,7 +3,9 @@ require "ostruct"
 
 describe "Supernova::Criteria" do
   let(:scope) { Supernova::Criteria.new }
-  
+  before(:each) do
+    scope.stub!(:execute).and_return [].paginate(:page => 1)
+  end
   
   describe "#initialize" do
     it "can be initialized" do
@@ -110,9 +112,66 @@ describe "Supernova::Criteria" do
   end
   
   it "to_a raises an implement in subclass error" do
+    scope.unstub(:execute)
     lambda {
-      scope.to_a
+      scope.execute
     }.should raise_error("implement in subclass")
+  end
+  
+  describe "#to_a" do
+    it "calls populate" do
+      scope.should_receive(:populate)
+      scope.to_a
+    end
+    
+    it "returns the results" do
+      res = double("results")
+      scope.instance_variable_set("@results", res)
+      scope.to_a.should == res
+    end
+  end
+  
+  describe "#populate" do
+    it "returns self when" do
+      scope.stub!(:populated?).and_return true
+      scope.populate.should == scope
+    end
+    
+    it "does not change @results when already populated" do
+      res = double("results")
+      scope.instance_variable_set("@results", res)
+      scope.stub!(:populated?).and_return true
+      scope.populate.should == scope
+      scope.instance_variable_get("@results").should == res
+    end
+    
+    it "returns the scope when not populated yet" do
+      scope.populate.should == scope
+    end
+    
+    it "calls execute" do
+      scope.should_receive(:execute).and_return []
+      scope.populate
+    end
+    
+    it "assigns the result of populate" do
+      result = double("result")
+      scope.stub!(:execute).and_return result
+      scope.populate
+      scope.instance_variable_get("@results").should == result
+    end
+  end
+  
+  describe "#populated?" do
+    it "returns false when @results not set" do
+      scope.should_not be_populated
+    end
+    
+    it "returns true when instance variable set" do
+      scope.stub!(:execute).and_return []
+      scope.populate
+      scope.should be_populated
+    end
   end
   
   describe "with to_a stubbed" do
@@ -122,17 +181,19 @@ describe "Supernova::Criteria" do
       scope.stub!(:to_a).and_return array_double
     end
     
-    [ :first, :each, :count, :last ].each do |method|
+    [ :first, :each, :count, :last, :total_entries ].each do |method|
       it "forwards #{method} to array" do
-        ret = double("ret")
-        array_double.should_receive(method).and_return ret
+        results = double("ret")
+        scope.instance_variable_set("@results", results)
+        scope.should_receive(:populated?).and_return false
         scope.send(method)
       end
     end
     
     it "hands given blocks in" do
       array = [1, 2, 3]
-      scope.stub!(:to_a).and_return array
+      scope.instance_variable_set("@results", array)
+      scope.stub!(:populated?).and_return true
       called = []
       scope.each do |i|
         called << i
@@ -153,6 +214,13 @@ describe "Supernova::Criteria" do
       lambda {
         scope.method_missing(:rgne)
       }.should raise_error(NoMethodError)
+    end
+    
+    it "forwards all array methods to @results" do
+      results = double("results")
+      scope.instance_variable_set("@results", results)
+      results.should_receive(:index, "1")
+      scope.index("1")
     end
     
     it "calls named_scope_defined" do
@@ -193,10 +261,6 @@ describe "Supernova::Criteria" do
       mapping = { :title => { :type => :integer } }
       scope.attribute_mapping(mapping).search_options[:attribute_mapping].should == mapping
     end
-  end
-  
-  describe "#with_scopes" do
-    
   end
   
   describe "#merge" do

@@ -137,7 +137,7 @@ class Supernova::SolrCriteria < Supernova::Criteria
     end
   end
   
-  def to_a
+  def execute
     response = Supernova::Solr.connection.post("select", :data => to_params)
     collection = Supernova::Collection.new(current_page, per_page, response["response"]["numFound"])
     collection.replace(build_docs(response["response"]["docs"]))

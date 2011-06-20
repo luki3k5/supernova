@@ -34,7 +34,7 @@ class Supernova::ThinkingSphinxCriteria < Supernova::Criteria
     [(self.search_options[:search] || Array.new).join(" "), sphinx_options]
   end
   
-  def to_a
+  def execute
     ThinkingSphinx.search(*self.to_params)
   end
   

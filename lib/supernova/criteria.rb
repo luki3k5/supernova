@@ -2,7 +2,7 @@ class Supernova::Criteria
   DEFAULT_PER_PAGE = 25
   FIRST_PAGE = 1
   
-  attr_accessor :filters, :search_options, :clazz
+  attr_accessor :filters, :search_options, :clazz, :results
 
   class << self
     def method_missing(*args)
@@ -138,8 +138,22 @@ class Supernova::Criteria
   def to_parameters
     implement_in_subclass
   end
-
+  
+  def populate
+    @results = execute if !populated?
+    self
+  end
+  
   def to_a
+    populate
+    results
+  end
+  
+  def populated?
+    instance_variables.include?("@results")
+  end
+  
+  def execute
     implement_in_subclass
   end
   
@@ -170,8 +184,9 @@ class Supernova::Criteria
   end
 
   def method_missing(*args, &block)
-    if args.length == 1 && Array.new.respond_to?(args.first)
-      to_a.send(args.first, &block)
+    if Supernova::Collection.instance_methods.include?(args.first.to_s)
+      populate
+      @results.send(*args, &block)
     elsif self.named_scope_defined?(args.first)
       self.merge(self.search_options[:named_scope_class].send(*args)) # merge named scope and current criteria
     else
