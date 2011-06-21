@@ -73,9 +73,38 @@ describe Supernova::SolrIndexer do
       row2 = double("row2")
       indexer.stub!(:query).and_return [row1, row2]
       indexer.stub!(:query_to_index).and_return "some query"
-      indexer.should_receive(:row_to_solr).with(row1)
+      indexer.should_receive(:map_for_solr).with(row1)
       indexer.stub!(:index_query).and_yield(row1)
       indexer.index!
+    end
+  end
+  
+  describe "#map_for_solr" do
+    let(:row) { { "a" => 1 } }
+    
+    it "calls row_to_solr" do
+      indexer.should_not_receive(:before_index)
+      indexer.should_receive(:row_to_solr).with(row).and_return row
+      indexer.map_for_solr(row)
+    end
+    
+    it "prints a deprecation warning when using row_to_solr" do
+      indexer.stub!(:row_to_solr).with(row).and_return row
+      indexer.should_receive(:puts).with("DEPRECATION WARNING: use before_index instead of row_to_solr!")
+      indexer.map_for_solr(row)
+    end
+    
+    it "calls before_index when row_to_solr is not defined" do
+      row = { "a" => 1 }
+      indexer.should_receive(:before_index).with(row).and_return row
+      indexer.map_for_solr(row)
+    end
+    
+    it "calls map_hash_keys_to_solr with result of row_to_solr" do
+      dummy_row = double("dummy row")
+      indexer.stub!(:row_to_solr).and_return dummy_row
+      indexer.should_receive(:map_hash_keys_to_solr).with(dummy_row)
+      indexer.map_for_solr({ "a" => 1 })
     end
   end
   
@@ -118,9 +147,9 @@ describe Supernova::SolrIndexer do
     end
   end
   
-  describe "#row_to_solr" do
+  describe "#before_index" do
     it "returns the db row by default" do
-      indexer.row_to_solr("id" => 1).should == { "id" => 1 }
+      indexer.before_index("id" => 1).should == { "id" => 1 }
     end
   end
   
@@ -135,6 +164,56 @@ describe Supernova::SolrIndexer do
       indexer.db = old_mysql_double
       old_mysql_double.should_receive(:select_all).with("query").and_return [to_index]
       indexer.query_db("query")
+    end
+  end
+  
+  describe "#map_hash_keys_to_solr" do
+    class CustomSolrIndex < Supernova::SolrIndexer
+      has :offer_id, :type => :integer
+      has :lat, :type => :float
+      has :lng, :type => :float
+      has :created_at, :type => :date
+      has :checkin_date, :type => :date
+    end
+    
+    it "maps float fields" do
+      index = CustomSolrIndex.new
+      index.map_hash_keys_to_solr("lat" => 49.0)["lat_f"].should == 49.0
+    end
+    
+    it "maps time fields to iso8601" do
+      index = CustomSolrIndex.new
+      time = Time.parse("2011-02-03 11:20:30")
+      index.map_hash_keys_to_solr("created_at" => time)["created_at_dt"].should == "2011-02-03T10:20:30Z"
+    end
+    
+    it "maps date fields to iso8601" do
+      date = Date.new(2011, 1, 2)
+      CustomSolrIndex.new.map_hash_keys_to_solr("checkin_date" => date)["checkin_date_dt"].should == "2011-01-02T00:00:00Z"
+    end
+    
+    it "sets the indexed_at time" do
+      Time.stub!(:now).and_return Time.parse("2011-02-03T11:20:30Z")
+      CustomSolrIndex.new.map_hash_keys_to_solr({})["indexed_at_dt"].should == "2011-02-03T11:20:30Z"
+      Time.unstub!(:now)
+    end
+    
+    it "adds the class as type when class set" do
+      clazz = Class.new(Supernova::SolrIndexer)
+      clazz.clazz Offer
+      clazz.new.map_hash_keys_to_solr({})["type"].should == "Offer"
+    end
+    
+    it "uses the table_name as prefix for ids" do
+      clazz = Class.new(Supernova::SolrIndexer)
+      clazz.table_name :people
+      clazz.new.map_hash_keys_to_solr({ "id" => 88 })["id_s"].should == "people/88"
+    end
+    
+    it "adds the sets the cla" do
+      clazz = Class.new(Supernova::SolrIndexer)
+      clazz.clazz Offer
+      clazz.new.map_hash_keys_to_solr({})["type"].should == "Offer"
     end
   end
   
@@ -394,9 +473,7 @@ describe Supernova::SolrIndexer do
       custom_indexer.defined_fields
     end
     
-    ["title AS title_t", "artist_id AS artist_id_i", "description AS description_t", 
-      %(IF(created_at IS NULL, NULL, CONCAT(REPLACE(created_at, " ", "T"), "Z")) AS created_at_dt)
-    ].each do |field|
+    ["title", "artist_id", "description", "created_at"].each do |field|
       it "includes field #{field.inspect}" do
         custom_indexer.defined_fields.should include(field)
       end
@@ -406,7 +483,7 @@ describe Supernova::SolrIndexer do
       clazz = Class.new(Supernova::SolrIndexer)
       clazz.has :location, :type => :location, :virtual => true
       clazz.has :title, :type => :string
-      clazz.new.defined_fields.should == ["title AS title_s"]
+      clazz.new.defined_fields.should == ["title"]
     end
   end
   

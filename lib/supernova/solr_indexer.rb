@@ -72,12 +72,39 @@ class Supernova::SolrIndexer
   
   def index!
     index_query(query_to_index) do |row|
-      row_to_solr(row)
+      map_for_solr(row)
     end
   end
   
-  def row_to_solr(row)
+  def map_for_solr(row)
+    map_hash_keys_to_solr(
+      if self.respond_to?(:row_to_solr)
+        puts "DEPRECATION WARNING: use before_index instead of row_to_solr!"
+        self.row_to_solr(row)
+      else
+        self.before_index(row)
+      end
+    )
+  end
+  
+  def before_index(row)
     row
+  end
+  
+  def map_hash_keys_to_solr(hash)
+    hash["indexed_at_dt"] = Time.now.utc.iso8601
+    hash["id_s"] = [self.class.table_name, hash["id"]].compact.join("/") if hash["id"]
+    self.class.field_definitions.each do |field, options|
+      if value = hash.delete(field.to_s)
+        if options[:type] == :date 
+          value = Time.utc(value.year, value.month, value.day) if value.is_a?(Date)
+          value = value.utc.iso8601 
+        end
+        hash["#{field}_#{self.class.suffix_from_type(options[:type])}"] = value
+      end
+    end
+    hash["type"] = self.class.clazz.to_s if self.class.clazz
+    hash
   end
   
   def table_name
@@ -99,7 +126,7 @@ class Supernova::SolrIndexer
   
   def defined_fields
     self.class.field_definitions.map do |field, options|
-      sql_column_from_field_and_type(field, options[:type]) if options[:virtual] != true
+      field.to_s if options[:virtual] != true
     end.compact
   end
   
