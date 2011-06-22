@@ -87,20 +87,11 @@ class Supernova::SolrCriteria < Supernova::Criteria
   end
   
   def build_doc(hash)
-    return hash if !hash["type"].respond_to?(:constantize)
-    doc = hash["type"].constantize.new
-    doc.instance_variable_set("@solr_doc", hash)
-    atts = convert_doc_attributes(hash)
-    if doc.instance_variables.include?("@attributes")
-      doc.instance_variable_set("@attributes", atts.except("type"))
+    if hash["type"].respond_to?(:constantize)
+      Supernova.build_ar_like_record(hash["type"].constantize, convert_doc_attributes(hash), hash)
     else
-      atts.each do |key, value|
-        doc.send(:"#{key}=", value) if doc.respond_to?(:"#{key}=")
-      end
+      hash
     end
-    doc.instance_variable_set("@readonly", true)
-    doc.instance_variable_set("@new_record", false)
-    doc
   end
   
   # called in build doc, all hashes have strings as keys!!!

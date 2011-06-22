@@ -84,4 +84,45 @@ describe Supernova do
       end
     end
   end
+
+  describe "#build_ar_like_record" do
+    let(:offer_double) { double("offer").as_null_object }
+    
+    before(:each) do
+      Offer.stub!(:new).and_return offer_double
+    end
+    
+    it "is callable" do
+      Supernova.should respond_to(:build_ar_like_record)
+    end
+    
+    it "creates a new instance" do
+      Offer.should_receive(:new).and_return offer_double
+      Supernova.build_ar_like_record(Offer, {})
+    end
+    
+    it "sets the attributes" do
+      atts = { :a => 1 }
+      offer_double.should_receive(:instance_variable_set).with("@attributes", atts)
+      Supernova.build_ar_like_record(Offer, atts)
+    end
+    
+    it "returns the record" do
+      Supernova.build_ar_like_record(Offer, {}).should == offer_double
+    end
+    
+    it "sets readonly to true" do
+      Supernova.build_ar_like_record(Offer, {}).instance_variable_get("@readonly").should == true
+    end
+    
+    it "sets new_record to false" do
+      Supernova.build_ar_like_record(Offer, {}).instance_variable_get("@new_record").should == false
+    end
+    
+    it "sets the original_search_doc hash when given" do
+      original_search_doc = double("original_search_doc")
+      doc = Supernova.build_ar_like_record(Offer, {}, original_search_doc)
+      doc.instance_variable_get("@original_search_doc").should == original_search_doc
+    end
+  end
 end

@@ -78,8 +78,10 @@ class Supernova::SolrIndexer
   
   def map_for_solr(row)
     map_hash_keys_to_solr(
-      if self.respond_to?(:row_to_solr)
-        puts "DEPRECATION WARNING: use before_index instead of row_to_solr!"
+      if self.respond_to?(:extra_attributes_from_record) && self.class.clazz
+        row.merge(self.extra_attributes_from_record(Supernova.build_ar_like_record(self.class.clazz, row)).stringify_keys)
+      elsif self.respond_to?(:row_to_solr)
+        puts "DEPRECATION WARNING: use before_index instead of row_to_solr! in #{caller.first}"
         self.row_to_solr(row)
       else
         self.before_index(row)

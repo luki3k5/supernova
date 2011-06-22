@@ -283,9 +283,7 @@ describe Supernova::SolrCriteria do
       criteria.build_doc(row).should == row
     end
     
-    it "assigns the attributes returned from convert_doc_attributes to attributes when instance variable exists" do
-      str = String.new
-      str.instance_variable_set("@attributes", {})
+    it "assigns the attributes returned from convert_doc_attributes to attributes when record responds to attributes=" do
       atts = { :title => "Hello" }
       row = { "type" => "Offer" }
       criteria.should_receive(:convert_doc_attributes).with(row).and_return atts
@@ -293,9 +291,9 @@ describe Supernova::SolrCriteria do
       doc.instance_variable_get("@attributes").should == atts
     end
     
-    it "sets the original solr_doc" do
-      solr_doc = { "type" => "Offer", "id" => "offers/id" }
-      criteria.build_doc(solr_doc).instance_variable_get("@solr_doc").should == solr_doc
+    it "sets the original original_search_doc" do
+      original_search_doc = { "type" => "Offer", "id" => "offers/id" }
+      criteria.build_doc(original_search_doc).instance_variable_get("@original_search_doc").should == original_search_doc
     end
     
     it "should be readonly" do

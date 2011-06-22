@@ -68,7 +68,7 @@ describe Supernova::SolrIndexer do
       indexer.index!
     end
     
-    it "calls row_to_solr with all returned rows from sql" do
+    it "calls map_for_solr with all returned rows from sql" do
       row1 = double("row1")
       row2 = double("row2")
       indexer.stub!(:query).and_return [row1, row2]
@@ -82,6 +82,10 @@ describe Supernova::SolrIndexer do
   describe "#map_for_solr" do
     let(:row) { { "a" => 1 } }
     
+    before(:each) do
+      indexer.stub!(:puts)
+    end
+    
     it "calls row_to_solr" do
       indexer.should_not_receive(:before_index)
       indexer.should_receive(:row_to_solr).with(row).and_return row
@@ -90,7 +94,7 @@ describe Supernova::SolrIndexer do
     
     it "prints a deprecation warning when using row_to_solr" do
       indexer.stub!(:row_to_solr).with(row).and_return row
-      indexer.should_receive(:puts).with("DEPRECATION WARNING: use before_index instead of row_to_solr!")
+      indexer.should_receive(:puts).with(/DEPRECATION WARNING: use before_index instead of row_to_solr! in/)
       indexer.map_for_solr(row)
     end
     
@@ -105,6 +109,37 @@ describe Supernova::SolrIndexer do
       indexer.stub!(:row_to_solr).and_return dummy_row
       indexer.should_receive(:map_hash_keys_to_solr).with(dummy_row)
       indexer.map_for_solr({ "a" => 1 })
+    end
+    
+    describe "with the index defining extra_attributes_from_record" do
+      let(:index) { SolrOfferIndex.new }
+      let(:offer_double) { double("Solr Offer", :id => 88).as_null_object }
+      
+      class SolrOfferIndex < Supernova::SolrIndexer
+        clazz Offer
+        has :created_at, :type => :date
+        has :offer_id, :type => :integer
+        
+        def extra_attributes_from_record(doc)
+          { :offer_code => "OFFER_#{doc.id}" }
+        end
+      end
+      
+      it "calls Supernova.build_ar_like_record with correct parameters" do
+        Supernova.should_receive(:build_ar_like_record).and_return offer_double
+        SolrOfferIndex.new("offer_id" => 77, "type" => "Offer").map_for_solr(row)
+      end
+      
+      it "includes the original attributes" do
+        index = SolrOfferIndex.new
+        index.map_for_solr({ "a" => 2 })["a"].should == 2
+      end
+      
+      it "includes the attributes from extra_attributes_from_record" do
+        index = SolrOfferIndex.new
+        index.map_for_solr({ "a" => 2, "id" => "88" })["offer_code"].should == "OFFER_88"
+        hash = { :a => 1, "a" => 2 }
+      end
     end
   end
   

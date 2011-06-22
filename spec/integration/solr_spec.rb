@@ -41,7 +41,7 @@ describe "Solr" do
       has :user_id, :type => :integer
       has :popularity, :type => :integer
       
-      def row_to_solr(row)
+      def before_index(row)
         row["indexed_at_dt"] = Time.now.utc.iso8601
         row
       end
@@ -54,7 +54,7 @@ describe "Solr" do
       offer2 = Offer.create!(:user_id => 2, :popularity => 20)
       indexer = OfferIndex.new(:db => ActiveRecord::Base.connection)
       indexer.index!
-      OfferIndex.search_scope.first.instance_variable_get("@solr_doc")["indexed_at_dt"].should_not be_nil
+      OfferIndex.search_scope.first.instance_variable_get("@original_search_doc")["indexed_at_dt"].should_not be_nil
       OfferIndex.search_scope.total_entries.should == 2
       OfferIndex.search_scope.order("user_id desc").populate.results.should == [offer2, offer1]
       indexer.instance_variable_get("@index_file_path").should be_nil
@@ -67,7 +67,7 @@ describe "Solr" do
       indexer.index!
       indexer.instance_variable_get("@index_file_path").should_not be_nil
       OfferIndex.search_scope.total_entries.should == 2
-      OfferIndex.search_scope.first.instance_variable_get("@solr_doc")["indexed_at_dt"].should_not be_nil
+      OfferIndex.search_scope.first.instance_variable_get("@original_search_doc")["indexed_at_dt"].should_not be_nil
       OfferIndex.search_scope.order("user_id desc").populate.results.should == [offer2, offer1]
       File.should_not be_exists(indexer.instance_variable_get("@index_file_path"))
     end
@@ -78,10 +78,34 @@ describe "Solr" do
       indexer = OfferIndex.new(:db => ActiveRecord::Base.connection, :max_rows_to_direct_index => 0, :local_solr => true)
       indexer.index!
       indexer.instance_variable_get("@index_file_path").should_not be_nil
-      OfferIndex.search_scope.first.instance_variable_get("@solr_doc")["indexed_at_dt"].should_not be_nil
+      OfferIndex.search_scope.first.instance_variable_get("@original_search_doc")["indexed_at_dt"].should_not be_nil
       OfferIndex.search_scope.total_entries.should == 2
       OfferIndex.search_scope.order("user_id desc").populate.results.should == [offer2, offer1]
       File.should_not be_exists(indexer.instance_variable_get("@index_file_path"))
+    end
+    
+    describe "with extra_attributes_from_doc method defined" do
+      
+      class OfferIndexWitheExtraSearchMethodFromDoc < Supernova::SolrIndexer
+        has :user_id, :type => :integer
+        has :popularity, :type => :integer
+        has :upcased_text, :type => :text, :virtual => true
+        has :text, :type => :text
+        
+        clazz Offer
+        
+        def extra_attributes_from_record(record)
+          { :upcased_text => record.text.to_s.upcase.presence }
+        end
+      end
+      
+      it "sets the capitalize_text attribute" do
+        Offer.create!(:user_id => 2, :popularity => 20, :text => "lower_text")
+        indexer = OfferIndexWitheExtraSearchMethodFromDoc.new(:db => ActiveRecord::Base.connection)
+        indexer.index!
+        offer = OfferIndexWitheExtraSearchMethodFromDoc.search_scope.first
+        offer.instance_variable_get("@original_search_doc")["upcased_text_t"].should == "LOWER_TEXT"
+      end
     end
   end
   
@@ -119,7 +143,7 @@ describe "Solr" do
       "popularity_i" => 10, "location_p" => "47,11"
     }.each do |key, value|
       it "sets #{key} to #{value}" do
-        doc = new_criteria.search("text_t:Hans").first.instance_variable_get("@solr_doc")[key].should == value
+        doc = new_criteria.search("text_t:Hans").first.instance_variable_get("@original_search_doc")[key].should == value
       end
     end
     

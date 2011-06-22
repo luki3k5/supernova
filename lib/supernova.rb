@@ -1,4 +1,6 @@
 require "rsolr"
+require "active_support/core_ext/object/blank"
+require "active_support/core_ext/hash"
 
 module Supernova
   KM_TO_METER = 1000.0
@@ -19,6 +21,17 @@ module Supernova
       end
       self.defined_named_search_scopes ||= []
       self.defined_named_search_scopes << name
+    end
+  end
+  
+  class << self
+    def build_ar_like_record(clazz, attributes, original_search_doc = nil)
+      record = clazz.new
+      record.instance_variable_set("@attributes", attributes)
+      record.instance_variable_set("@readonly", true)
+      record.instance_variable_set("@new_record", false)
+      record.instance_variable_set("@original_search_doc", original_search_doc) if original_search_doc
+      record
     end
   end
 end
