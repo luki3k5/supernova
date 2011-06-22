@@ -3,7 +3,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 describe "Solr" do
   before(:each) do
     Supernova::Solr.instance_variable_set("@connection", nil)
-    Supernova::Solr.url = "http://localhost:8983/solr/"
+    Supernova::Solr.url = "http://localhost:8985/solr/"
     Supernova::Solr.truncate!
     Offer.criteria_class = Supernova::SolrCriteria
     root = Geokit::LatLng.new(47, 11)
