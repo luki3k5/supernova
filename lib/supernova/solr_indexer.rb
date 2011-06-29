@@ -248,7 +248,8 @@ class Supernova::SolrIndexer
       %(cd #{File.dirname(index_file_path)} && curl -s '#{solr_url}/update/json?commit=true' --data-binary @#{File.basename(index_file_path)} -H 'Content-type:application/json')
     end
     out = Kernel.send(:`, cmd)
-    FileUtils.rm_f(self.index_file_path) if out.to_s.include?(%(<int name=\"status\">0</int>))
+    raise "unable to index #{index_file_path}: #{out}" if !out.to_s.include?(%(<int name=\"status\">0</int>))
+    FileUtils.rm_f(self.index_file_path)
     out
   end
 end

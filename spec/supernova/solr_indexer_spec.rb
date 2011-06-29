@@ -6,11 +6,13 @@ describe Supernova::SolrIndexer do
   let(:to_index) { { :id => 1, :title => "Some Title"} }
   let(:file_stub) { double("file").as_null_object }
   let(:solr) { double("solr").as_null_object }
+  let(:solr_index_response) { %(<int name="status">0</int>) }
   
   let(:indexer) do
     indexer = Supernova::SolrIndexer.new
     indexer.db = db
     indexer.stub!(:system).and_return true
+    Kernel.stub!(:`).and_return solr_index_response
     indexer
   end
   
@@ -414,13 +416,13 @@ describe Supernova::SolrIndexer do
     
     it "calls the correct curl command" do
       indexer = Supernova::SolrIndexer.new(:index_file_path => "/tmp/some_path.json", :local_solr => true)
-      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return "<\"status\">0"
+      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return solr_index_response
       indexer.do_index_file(:local => true)
     end
     
     it "calls rm on file" do
       indexer = Supernova::SolrIndexer.new(:index_file_path => "/tmp/some_path.json", :local_solr => true)
-      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return %(<int name="status">0</int>)
+      Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return solr_index_response
       FileUtils.should_receive(:rm_f).with("/tmp/some_path.json")
       indexer.do_index_file(:local => true)
     end
@@ -429,13 +431,15 @@ describe Supernova::SolrIndexer do
       indexer = Supernova::SolrIndexer.new(:index_file_path => "/tmp/some_path.json", :local_solr => true)
       Kernel.should_receive(:`).with("curl -s 'http://solr.xx:9333/solr/update/json?commit=true\\&stream.file=/tmp/some_path.json'").and_return %(<int name="status">1</int>)
       FileUtils.should_not_receive(:rm_f).with("/tmp/some_path.json")
-      indexer.do_index_file(:local => true)
+      lambda {
+        indexer.do_index_file(:local => true)
+      }.should raise_error
     end
     
     it "executes the correct curl call when not local" do
       # curl 'http://localhost:8983/solr/update/json?commit=true' --data-binary @books.json -H 'Content-type:application/json'
       indexer.index_file_path = "/tmp/some_path.json"
-      Kernel.should_receive(:`).with("cd /tmp && curl -s 'http://solr.xx:9333/solr/update/json?commit=true' --data-binary @some_path.json -H 'Content-type:application/json'")
+      Kernel.should_receive(:`).with("cd /tmp && curl -s 'http://solr.xx:9333/solr/update/json?commit=true' --data-binary @some_path.json -H 'Content-type:application/json'").and_return solr_index_response
       indexer.do_index_file
     end
   end
