@@ -6,10 +6,11 @@ source "http://rubygems.org"
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
 
-gem "thinking-sphinx", "2.0.3"
 gem "rsolr"
 gem "will_paginate"
 gem "json"
+gem "activesupport"
+gem "activerecord"
 
 group :development do
   gem "ruby-debug"

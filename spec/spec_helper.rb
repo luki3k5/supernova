@@ -7,6 +7,7 @@ require "logger"
 require "fileutils"
 require "ruby-debug"
 require "geokit"
+require "active_record"
 
 if defined?(Debugger) && Debugger.respond_to?(:settings)
   Debugger.settings[:autolist] = 1
@@ -32,33 +33,13 @@ ActiveRecord::Base.establish_connection(
 )
 
 PROJECT_ROOT = Pathname.new(File.expand_path("..", File.dirname(__FILE__)))
-FileUtils.mkdir_p(PROJECT_ROOT.join("db/sphinx/development"))
 FileUtils.mkdir_p(PROJECT_ROOT.join("log"))
-FileUtils.mkdir_p(PROJECT_ROOT.join("config"))
-
-ThinkingSphinx::ActiveRecord::LogSubscriber.logger = Logger.new(
-  open(File.expand_path("../log/active_record.log", File.dirname(__FILE__)), "a")
-)
-
-ActiveRecord::Base.send(:include, ThinkingSphinx::ActiveRecord)
 
 ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS offers")
 ActiveRecord::Base.connection.execute("CREATE TABLE offers (id SERIAL, text TEXT, user_id INTEGER, enabled BOOLEAN, popularity INTEGER, lat FLOAT, lng FLOAT)")
 
 class Offer < ActiveRecord::Base
-  include Supernova::ThinkingSphinx
-  
-  define_index do
-    indexes text
-    
-    has :user_id
-    has :enabled
-    has :popularity, :sort => true
-    
-    has "RADIANS(lat)",  :as => :lat, :type => :float
-    has "RADIANS(lng)", :as => :lng, :type => :float
-  end
-  
+  include Supernova::Solr
   named_search_scope :for_user_ids do |*ids|
     with(:user_id => ids.flatten)
   end

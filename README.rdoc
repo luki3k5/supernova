@@ -2,12 +2,7 @@
 
 == Setup
 
-  require "supernova"
-  require "supernova/thinking_sphinx"
-  
-  class Offer
-    include Supernova::ThinkingSphinx
-  end
+  will come back soon!
 
 === Anonymous Scopes
 
@@ -24,8 +19,6 @@
 === Named Scopes
 
   class Offer
-    include Supernova::ThinkingSphinx
-    
     named_search_scope :popular do
       order("popularity desc")
     end

@@ -24,7 +24,7 @@ describe "Solr" do
   after(:each) do
     Supernova::Solr.url = nil
     Supernova::Solr.instance_variable_set("@connection", nil)
-    Offer.criteria_class = Supernova::ThinkingSphinxCriteria
+    Offer.criteria_class = Supernova::SolrCriteria
   end
   
   def new_criteria

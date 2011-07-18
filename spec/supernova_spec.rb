@@ -3,12 +3,12 @@ require 'spec_helper'
 describe Supernova do
   let(:clazz) do
     clazz = Class.new
-    clazz.send(:include, Supernova::ThinkingSphinx)
+    clazz.send(:include, Supernova::Solr)
   end
   
   describe "#including" do
     it "can be includes" do
-      Class.new.send(:include, Supernova::ThinkingSphinx)
+      Class.new.send(:include, Supernova::Solr)
     end
 
     it "defines a named_search_scope method" do
@@ -19,7 +19,7 @@ describe Supernova do
   
   describe "#search_scope" do
     it "returns a new criteria" do
-      clazz.search_scope.should be_an_instance_of(Supernova::ThinkingSphinxCriteria)
+      clazz.search_scope.should be_an_instance_of(Supernova::SolrCriteria)
     end
     
     it "sets the correct clazz" do
@@ -40,7 +40,7 @@ describe Supernova do
       end
 
       it "returns a new criteria" do
-        clazz.popular.should be_an_instance_of(Supernova::ThinkingSphinxCriteria)
+        clazz.popular.should be_an_instance_of(Supernova::SolrCriteria)
       end
 
       it "sets the clazz attribute" do
@@ -58,11 +58,11 @@ describe Supernova do
     
     describe "chaining" do
       it "calls merge with both scopes" do
-        scope = Supernova::ThinkingSphinxCriteria.new(clazz).named_scope_class(clazz)
-        scope.should_receive(:merge).with(instance_of(Supernova::ThinkingSphinxCriteria))
+        scope = Supernova::SolrCriteria.new(clazz).named_scope_class(clazz)
+        scope.should_receive(:merge).with(instance_of(Supernova::SolrCriteria))
         scope.popular
       end
-      # Supernova::ThinkingSphinxCriteria.new(clazz).popular.should be_an_instance_of()
+      # Supernova::SolrCriteria.new(clazz).popular.should be_an_instance_of()
     end
     
     describe "with parameters" do
