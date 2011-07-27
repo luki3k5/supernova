@@ -1,3 +1,5 @@
 #!/usr/bin/env ruby
 
-exec %(cd /usr/local/Cellar/solr/3.1.0/libexec/example && java -Dsolr.solr.home=#{File.expand_path("../solr", File.dirname(__FILE__))} -Djetty.port=8985 -jar start.jar)
+solr_home = File.expand_path("../solr", File.dirname(__FILE__))
+cmd = %(cd /usr/local/Cellar/solr/3.1.0/libexec/example && java -Dsolr.solr.home=#{solr_home} -Djetty.port=8985 -jar start.jar > #{solr_home}/solr.log 2>&1 &)
+exec cmd

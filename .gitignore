@@ -50,3 +50,4 @@ log
 db
 config
 solr/data
+solr/solr.log
