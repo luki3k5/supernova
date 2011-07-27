@@ -70,16 +70,6 @@ describe Supernova::SolrIndexer do
       indexer.should_receive(:index_query).with(query)
       indexer.index!
     end
-    
-    it "calls map_for_solr with all returned rows from sql" do
-      row1 = double("row1")
-      row2 = double("row2")
-      indexer.stub!(:query).and_return [row1, row2]
-      indexer.stub!(:query_to_index).and_return "some query"
-      indexer.should_receive(:map_for_solr).with(row1)
-      indexer.stub!(:index_query).and_yield(row1)
-      indexer.index!
-    end
   end
   
   describe "#map_for_solr" do
@@ -289,6 +279,12 @@ describe Supernova::SolrIndexer do
   describe "#index_query" do
     let(:query) { %(SELECT CONCAT("user_", id) AS id, title FROM people WHERE type = 'User') }
     
+    it "calls solr_rows_to_index_for_query with query" do
+      result = []
+      indexer.should_receive(:solr_rows_to_index_for_query).with(query).and_return(result)
+      indexer.index_query(query)
+    end
+    
     it "calls index_with_json_file when rows > max_rows_to_direct_index" do
       indexer.max_rows_to_direct_index = 0
       rows = [to_index]
@@ -321,7 +317,7 @@ describe Supernova::SolrIndexer do
       end
 
       it "calls write_to_file on all rows" do
-        rows = [double("1"), double("2")]
+        rows = [{ "b" => 2 }, { "a" => 1 }]
         indexer.stub(:query_db).and_return rows
         indexer.should_receive(:write_to_file).with(rows.first)
         indexer.should_receive(:write_to_file).with(rows.at(1))
@@ -359,8 +355,6 @@ describe Supernova::SolrIndexer do
       solr.should_not_receive(:commit)
       indexer.index_directly([])
     end
-    
-    it "calls a block given given"
   end
   
   describe "#index_file_path" do

@@ -71,9 +71,7 @@ class Supernova::SolrIndexer
   end
   
   def index!
-    index_query(query_to_index) do |row|
-      map_for_solr(row)
-    end
+    index_query(query_to_index)
   end
   
   def map_for_solr(row)
@@ -182,18 +180,17 @@ class Supernova::SolrIndexer
     end
   end
   
-  def index_query(query, &block)
-    rows = query_db(query)
+  def index_query(query)
+    rows = solr_rows_to_index_for_query(query)
     if self.max_rows_to_direct_index < rows.count
-      index_with_json_file(rows, &block)
+      index_with_json_file(rows)
     else
-      index_directly(rows, &block)
+      index_directly(rows)
     end
   end
   
   def index_directly(rows, &block)
     rows.each do |row|
-      row = yield(row) if block_given?
       row = Supernova::Solr.connection.add(row)
     end
     Supernova::Solr.connection.commit if rows.any?
@@ -201,7 +198,6 @@ class Supernova::SolrIndexer
   
   def index_with_json_file(rows, &block)
     rows.each do |row|
-      row = yield(row) if block_given?
       write_to_file(row)
     end
     finish
