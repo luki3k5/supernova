@@ -195,6 +195,38 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  describe "#debug" do
+    it "prints a line when debug is enabled" do
+      index = CustomSolrIndex.new(:debug => true)
+      index.should_receive(:puts).with(/hello world/)
+      index.debug "hello world"
+    end
+    
+    it "does not print print a line when debug is not enabled" do
+      index = CustomSolrIndex.new(:debug => false)
+      index.should_not_receive(:puts)
+      index.debug "hello world"
+    end
+    
+    it "can be called with block and still returns the response" do
+      index = CustomSolrIndex.new(:debug => true)
+      index.should_receive(:puts).with(/some message/)
+      res = index.debug "some message" do
+        112
+      end
+      res.should == 112
+    end
+    
+    it "includes the time in the debug output when placeholder found" do
+      index = CustomSolrIndex.new(:debug => true)
+      Benchmark.stub(:realtime).and_return 0.12345
+      index.should_receive(:puts).with(/indexed in 0.123/)
+      index.debug "indexed in %TIME%" do
+        112
+      end
+    end
+  end
+  
   describe "#map_hash_keys_to_solr" do
     class CustomSolrIndex < Supernova::SolrIndexer
       has :offer_id, :type => :integer
@@ -203,6 +235,10 @@ describe Supernova::SolrIndexer do
       has :created_at, :type => :date
       has :checkin_date, :type => :date
       has :indexed, :type => :boolean, :virtual => true
+    end
+    
+    it "sets empty dates to nil" do
+      CustomSolrIndex.new.map_hash_keys_to_solr("checkin_date" => nil)["checkin_date_dt"].should == nil
     end
     
     it "maps virtual fields" do

@@ -1,9 +1,10 @@
 require "json"
 require "fileutils"
+require "time"
 
 class Supernova::SolrIndexer
   attr_accessor :options, :db, :ids, :max_rows_to_direct_index, :local_solr
-  attr_writer :index_file_path
+  attr_writer :index_file_path, :debug
   
   MAX_ROWS_TO_DIRECT_INDEX = 100
   
@@ -70,6 +71,17 @@ class Supernova::SolrIndexer
     self.ids ||= :all
   end
   
+  def debug(message)
+    response = true
+    time = Benchmark.realtime do
+      response = yield if block_given?
+    end
+    if @debug == true
+      puts "%s: %s" % [Time.now.iso8601(3), message.gsub("%TIME%", "%.3f" % time)]
+    end
+    response
+  end
+  
   def index!
     index_query(query_to_index)
   end
@@ -99,7 +111,7 @@ class Supernova::SolrIndexer
         value = hash.delete(field.to_s)
         if options[:type] == :date 
           value = Time.utc(value.year, value.month, value.day) if value.is_a?(Date)
-          value = value.utc.iso8601 
+          value = value.utc.iso8601 if value
         end
         hash["#{field}_#{self.class.suffix_from_type(options[:type])}"] = value
       end
@@ -181,24 +193,33 @@ class Supernova::SolrIndexer
   end
   
   def index_query(query)
-    rows = solr_rows_to_index_for_query(query)
+    debug "getting rows for #{query[0,100]}"
+    rows = debug "got all rows in %TIME%" do
+      solr_rows_to_index_for_query(query)
+    end
     if self.max_rows_to_direct_index < rows.count
-      index_with_json_file(rows)
+      debug "indexed #{rows.length} rows with json in %TIME%" do
+        index_with_json_file(rows)
+      end
     else
-      index_directly(rows)
+      debug "indexed #{rows.length} rows directly in %TIME%" do
+        index_directly(rows)
+      end
     end
   end
   
-  def index_directly(rows, &block)
+  def index_directly(rows)
     rows.each do |row|
       row = Supernova::Solr.connection.add(row)
     end
     Supernova::Solr.connection.commit if rows.any?
   end
   
-  def index_with_json_file(rows, &block)
-    rows.each do |row|
-      write_to_file(row)
+  def index_with_json_file(rows)
+    debug "wrote #{rows.count} rows to the json file in %TIME%" do
+      rows.each do |row|
+        write_to_file(row)
+      end
     end
     finish
   end
