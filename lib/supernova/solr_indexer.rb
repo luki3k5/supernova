@@ -97,7 +97,8 @@ class Supernova::SolrIndexer
     hash["indexed_at_dt"] = Time.now.utc.iso8601
     hash["id_s"] = [self.class.table_name, hash["id"]].compact.join("/") if hash["id"]
     self.class.field_definitions.each do |field, options|
-      if value = hash.delete(field.to_s)
+      if hash.has_key?(field.to_s)
+        value = hash.delete(field.to_s)
         if options[:type] == :date 
           value = Time.utc(value.year, value.month, value.day) if value.is_a?(Date)
           value = value.utc.iso8601 
@@ -173,6 +174,12 @@ class Supernova::SolrIndexer
   
   def query_db(query)
     db.send(db.respond_to?(:query) ? :query : :select_all, query)
+  end
+  
+  def solr_rows_to_index_for_query(query)
+    query_db(query).map do |row|
+      map_for_solr(row)
+    end
   end
   
   def index_query(query, &block)

@@ -25,6 +25,7 @@ describe Supernova::SolrIndexer do
     indexer_clazz.has(:artist_id, :type => :integer)
     indexer_clazz.has(:description, :type => :text)
     indexer_clazz.has(:created_at, :type => :date)
+    indexer_clazz.has(:indexed, :type => :boolean, :virtual => true)
   end
   
   before(:each) do
@@ -211,6 +212,15 @@ describe Supernova::SolrIndexer do
       has :lng, :type => :float
       has :created_at, :type => :date
       has :checkin_date, :type => :date
+      has :indexed, :type => :boolean, :virtual => true
+    end
+    
+    it "maps virtual fields" do
+      CustomSolrIndex.new.map_hash_keys_to_solr("indexed" => true)["indexed_b"].should == true
+    end
+    
+    it "maps fields with false as value" do
+      CustomSolrIndex.new.map_hash_keys_to_solr("indexed" => false)["indexed_b"].should == false
     end
     
     it "maps float fields" do
@@ -251,6 +261,28 @@ describe Supernova::SolrIndexer do
       clazz = Class.new(Supernova::SolrIndexer)
       clazz.clazz Offer
       clazz.new.map_hash_keys_to_solr({})["type"].should == "Offer"
+    end
+  end
+  
+  describe "#solr_rows_to_index_for_query" do
+    let(:result) {
+      [
+        { "title" => "Some Title", "artist_id" => 10 }
+      ]
+    }
+    
+    { "title_t" => "Some Title", "artist_id_i" => 10 }.each do |key, value|
+      it "sets #{key} to #{value}" do
+        custom_indexer.should_receive(:query_db).with("some query").and_return(result)
+        custom_indexer.solr_rows_to_index_for_query("some query").first[key].should == value
+      end
+    end
+    
+    it "also maps virtual attributes" do
+      hash = { "indexed" => true }
+      query = "some query"
+      custom_indexer.should_receive(:query_db).with(query).and_return([hash])
+      custom_indexer.solr_rows_to_index_for_query(query).first["indexed_b"].should == true
     end
   end
   
@@ -625,7 +657,8 @@ describe Supernova::SolrIndexer do
     
     it "adds the attribute_mapping" do
       indexer_clazz.where(:a => 1).search_options[:attribute_mapping].should == {
-        :artist_id=>{:type=>:integer}, :title=>{:type=>:text}, :created_at=>{:type=>:date}, :description=>{:type=>:text}
+        :artist_id=>{:type=>:integer}, :title=>{:type=>:text}, :created_at=>{:type=>:date}, :description=>{:type=>:text},
+        :indexed => {:type => :boolean, :virtual => true } 
       }
     end
   end
@@ -636,7 +669,8 @@ describe Supernova::SolrIndexer do
         where(:public => true)
       end
       indexer_clazz.published.search_options[:attribute_mapping].should == {
-        :artist_id=>{:type=>:integer}, :title=>{:type=>:text}, :created_at=>{:type=>:date}, :description=>{:type=>:text}
+        :artist_id=>{:type=>:integer}, :title=>{:type=>:text}, :created_at=>{:type=>:date}, :description=>{:type=>:text}, 
+        :indexed => {:type => :boolean, :virtual => true } 
       }
     end
     
