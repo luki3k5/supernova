@@ -2,7 +2,27 @@
 
 == Setup
 
-  will come back soon!
+=== Define Solr Index
+
+  class LocationIndex < Supernova::SolrIndexer
+    has :title,     :type => :text
+    has :location,  :type => :string
+    
+    clazz Location
+    
+    # is called before hash is added to index (with original database row)
+    # only called when defined
+    def before_index(row)
+      row.merge(:indexed_b => true)
+    end
+    
+    # is called with a made up record of class defined with "clazz Location" and
+    # should return a hash which is merged into the original hash
+    # only called when method defined and clazz set
+    def extra_attributes_from_record(record)
+      { :normalized_title_s => record.normalized_title }
+    end
+  end
 
 === Anonymous Scopes
 
@@ -36,7 +56,7 @@
   Offer.search_scope.near(47.0, 11.0).within(100.meters)
   Offer.search_scope.near(other_offer).within(100.meters)
 
-== Contributing to search_scopes
+== Contributing to supernova
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
