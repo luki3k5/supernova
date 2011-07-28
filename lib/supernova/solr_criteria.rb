@@ -73,7 +73,21 @@ class Supernova::SolrCriteria < Supernova::Criteria
   end
   
   def fq_filter_for_key_and_value(key, value)
-    "#{key}:#{value.is_a?(Range) ? "[#{value.first} TO #{value.last}]" : value}"
+    if value.nil?
+      "!#{key}:[* TO *]"
+    elsif value.is_a?(Range)
+      "#{key}:[#{value_for_fq_filter(value.first)} TO #{value_for_fq_filter(value.last)}]"
+    else
+      "#{key}:#{value_for_fq_filter(value)}"
+    end
+  end
+  
+  def value_for_fq_filter(value)
+    if value.is_a?(Date)
+      Time.utc(value.year, value.month, value.day).iso8601
+    else
+      value
+    end
   end
   
   def build_docs(docs)

@@ -30,6 +30,31 @@ describe Supernova::SolrCriteria do
     end
   end
   
+  describe "#fq_filter_for_key_and_value" do
+    it "returns the correct statment for nil" do
+      criteria.fq_filter_for_key_and_value(:user_id, nil).should == "!user_id:[* TO *]"
+    end
+    
+    it "returns the correct conditon for single values" do
+      criteria.fq_filter_for_key_and_value(:user_id, 1).should == "user_id:1"
+    end
+    
+    it "returns the correct condition for ranges" do
+      criteria.fq_filter_for_key_and_value(:user_id, 1..10).should == "user_id:[1 TO 10]"
+    end
+    
+    it "returns the correct conditon for single dates" do
+      criteria.fq_filter_for_key_and_value(:released_on, Date.new(1999, 1, 2)).should == "released_on:1999-01-02T00:00:00Z"
+    end
+    
+    it "returns the correct condition for date ranges" do
+      date1 = Date.new(1999, 1, 2)
+      date2 = Date.new(1999, 2, 5)
+      range = Range.new(date1, date2)
+      criteria.fq_filter_for_key_and_value(:open_at, range).should == "open_at:[1999-01-02T00:00:00Z TO 1999-02-05T00:00:00Z]"
+    end
+  end
+  
   describe "#to_params" do
     it "returns a Hash" do
       criteria.to_params.should be_an_instance_of(Hash)
