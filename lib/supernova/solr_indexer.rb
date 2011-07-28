@@ -183,7 +183,11 @@ class Supernova::SolrIndexer
   end
   
   def query_db(query)
-    db.send(db.respond_to?(:query) ? :query : :select_all, query)
+    if db.respond_to?(:query)
+      db.query(query, :as => :hash)
+    else
+      db.select_all(query)
+    end
   end
   
   def solr_rows_to_index_for_query(query)

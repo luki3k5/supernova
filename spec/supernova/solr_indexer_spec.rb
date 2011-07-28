@@ -183,7 +183,7 @@ describe Supernova::SolrIndexer do
   
   describe "#query_db" do
     it "executes the query" do
-      db.should_receive(:query).with("query").and_return [to_index]
+      db.should_receive(:query).with("query", :as => :hash).and_return [to_index]
       indexer.query_db("query")
     end
     
