@@ -290,6 +290,25 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  describe "#rows" do
+    let(:res) { double("result") }
+    
+    before(:each) do
+      custom_indexer.stub(:query_db).and_return([])
+    end
+    
+    it "calls query_db with correct query" do
+      custom_indexer.should_receive(:query_db).with("some query").and_return res
+      custom_indexer.rows("some query").should == res
+    end
+    
+    it "uses the query_to_index when query is blank" do
+      custom_indexer.should_receive(:query_to_index).and_return "some other query"
+      custom_indexer.should_receive(:query_db).with("some other query").and_return res
+      custom_indexer.rows.should == res
+    end
+  end
+  
   describe "#solr_rows_to_index_for_query" do
     let(:result) {
       [

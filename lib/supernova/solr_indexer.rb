@@ -190,6 +190,10 @@ class Supernova::SolrIndexer
     end
   end
   
+  def rows(query = nil)
+    query_db(query || query_to_index)
+  end
+  
   def solr_rows_to_index_for_query(query)
     query_db(query).map do |row|
       map_for_solr(row)
