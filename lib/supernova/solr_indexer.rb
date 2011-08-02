@@ -71,6 +71,15 @@ class Supernova::SolrIndexer
     self.ids ||= :all
   end
   
+  def ids=(new_ids)
+    @ids = new_ids
+    @cached = {}
+  end
+  
+  def cached
+    @cached ||= {}
+  end
+  
   def debug(message)
     response = true
     time = Benchmark.realtime do

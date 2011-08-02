@@ -235,6 +235,34 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  let(:index) { CustomSolrIndex.new }
+  
+  describe "#ids=" do
+    it "sets the ids array" do
+      index.ids = [2, 4]
+      index.ids.should == [2, 4]
+    end
+    
+    it "sets the @cached array to nil" do
+      index.instance_variable_set("@cached", { :a => 1 })
+      index.ids = [2, 4]
+      index.instance_variable_get("@cached").should == {}
+    end
+  end
+  
+  describe "#cached" do
+    it "returns the instance variable when set" do
+      index.instance_variable_set("@cached", { :a => 1 })
+      index.cached.should == { :a => 1 }
+    end
+    
+    it "returns and initializes a new cached hash when nil" do
+      index.instance_variable_set("@cached", nil)
+      index.cached.should == {}
+      index.instance_variable_get("@cached").should == {}
+    end
+  end
+  
   describe "#map_hash_keys_to_solr" do
     class CustomSolrIndex < Supernova::SolrIndexer
       has :offer_id, :type => :integer
