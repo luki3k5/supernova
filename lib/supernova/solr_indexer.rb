@@ -77,7 +77,9 @@ class Supernova::SolrIndexer
       response = yield if block_given?
     end
     if @debug == true
-      puts "%s: %s" % [Time.now.iso8601(3), message.gsub("%TIME%", "%.3f" % time)]
+      message.gsub!("%COUNT%", response.count.to_s) if message.include?("%COUNT%") && response.respond_to?(:count)
+      message.gsub!("%TIME%", "%.3f" % time)   if message.include?("%TIME%")
+      puts "%s: %s" % [Time.now.iso8601(3), message]
     end
     response
   end
@@ -104,14 +106,18 @@ class Supernova::SolrIndexer
   end
   
   def map_hash_keys_to_solr(hash)
-    hash["indexed_at_dt"] = Time.now.utc.iso8601
+    @indexed_at ||= Time.now.utc.iso8601.to_s
+    hash["indexed_at_dt"] = @indexed_at
     hash["id_s"] = [self.class.table_name, hash["id"]].compact.join("/") if hash["id"]
     self.class.field_definitions.each do |field, options|
       if hash.has_key?(field.to_s)
         value = hash.delete(field.to_s)
-        if options[:type] == :date 
-          value = Time.utc(value.year, value.month, value.day) if value.is_a?(Date)
-          value = value.utc.iso8601 if value
+        if options[:type] == :date
+          if value.is_a?(Date)
+            value = "#{value}T00:00:00Z" 
+          elsif value.respond_to?(:utc)
+            value = value.utc.iso8601
+          end
         end
         hash["#{field}_#{self.class.suffix_from_type(options[:type])}"] = value
       end
@@ -191,19 +197,14 @@ class Supernova::SolrIndexer
   end
   
   def rows(query = nil)
-    query_db(query || query_to_index)
-  end
-  
-  def solr_rows_to_index_for_query(query)
-    query_db(query).map do |row|
-      map_for_solr(row)
+    debug "fetched rows in %TIME%" do
+      query_db(query || query_to_index)
     end
   end
   
-  def index_query(query)
-    debug "getting rows for #{query[0,100]}"
-    rows = debug "got all rows in %TIME%" do
-      solr_rows_to_index_for_query(query)
+  def index_rows(rows)
+    debug "mapped %COUNT% rows to solr in %TIME%" do
+      rows.map! { |r| map_for_solr(r) }
     end
     if self.max_rows_to_direct_index < rows.count
       debug "indexed #{rows.length} rows with json in %TIME%" do
@@ -214,6 +215,17 @@ class Supernova::SolrIndexer
         index_directly(rows)
       end
     end
+  end
+  
+  def solr_rows_to_index_for_query(query)
+    query_db(query).map do |row|
+      map_for_solr(row)
+    end
+  end
+  
+  def index_query(query)
+    debug "getting rows for #{query[0,100]}"
+    index_rows(query_db(query))
   end
   
   def index_directly(rows)
@@ -279,8 +291,12 @@ class Supernova::SolrIndexer
     else
       %(cd #{File.dirname(index_file_path)} && curl -s '#{solr_url}/update/json?commit=true' --data-binary @#{File.basename(index_file_path)} -H 'Content-type:application/json')
     end
+    debug "run command: #{cmd}"
     out = Kernel.send(:`, cmd)
-    raise "unable to index #{index_file_path}: #{out}" if !out.to_s.include?(%(<int name=\"status\">0</int>))
+    if !out.to_s.include?(%(<int name=\"status\">0</int>))
+      debug "ERROR: #{out}"
+      raise "unable to index #{index_file_path}: #{out}" 
+    end
     FileUtils.rm_f(self.index_file_path)
     out
   end

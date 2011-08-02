@@ -8,6 +8,7 @@ require "fileutils"
 require "ruby-debug"
 require "geokit"
 require "active_record"
+PROJECT_ROOT = Pathname.new(File.expand_path("..", File.dirname(__FILE__)))
 
 if defined?(Debugger) && Debugger.respond_to?(:settings)
   Debugger.settings[:autolist] = 1
@@ -24,6 +25,7 @@ RSpec.configure do |config|
   end
 end
 
+
 ActiveRecord::Base.establish_connection(
   :adapter => "mysql2",
   :host => "localhost", 
@@ -32,7 +34,7 @@ ActiveRecord::Base.establish_connection(
   :encoding => "utf8"
 )
 
-PROJECT_ROOT = Pathname.new(File.expand_path("..", File.dirname(__FILE__)))
+
 FileUtils.mkdir_p(PROJECT_ROOT.join("log"))
 
 ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS offers")

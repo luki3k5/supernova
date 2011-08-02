@@ -225,6 +225,14 @@ describe Supernova::SolrIndexer do
         112
       end
     end
+    
+    it "replaces %COUNT% when responding to .count" do
+      index = CustomSolrIndex.new(:debug => true)
+      index.should_receive(:puts).with(/indexed 2/)
+      index.debug "indexed %COUNT%" do
+        [1, 2]
+      end
+    end
   end
   
   describe "#map_hash_keys_to_solr" do
@@ -331,59 +339,64 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  describe "#index_rows" do
+    let(:row1) { double("row1") }
+    let(:row2) { double("row2") }
+    let(:mapped1) { double("mapped 1") }
+    let(:mapped2) { double("mapped 2") }
+    
+    before(:each) do
+      custom_indexer.stub(:map_for_solr).with(row1).and_return(mapped1)
+      custom_indexer.stub(:map_for_solr).with(row2).and_return(mapped2)
+    end
+    
+    it "is callable" do
+      custom_indexer.index_rows([])
+    end
+    
+    it "calls map_for_solr on all rows" do
+      custom_indexer.should_receive(:map_for_solr).with(row1).and_return(mapped1)
+      custom_indexer.should_receive(:map_for_solr).with(row2).and_return(mapped2)
+      custom_indexer.index_rows([row1, row2])
+    end
+    
+    it "calls map_directly when number of rows < max_rows_to_direct_index" do
+      custom_indexer.should_receive(:max_rows_to_direct_index).and_return 100
+      custom_indexer.should_receive(:index_directly).with([mapped1, mapped2])
+      custom_indexer.index_rows([row1, row2])
+    end
+    
+    it "calls map_directly when number of rows < max_rows_to_direct_index" do
+      custom_indexer.should_receive(:max_rows_to_direct_index).and_return 1
+      custom_indexer.should_receive(:index_with_json_file).with([mapped1, mapped2])
+      custom_indexer.index_rows([row1, row2])
+    end
+  end
+  
   describe "#index_query" do
     let(:query) { %(SELECT CONCAT("user_", id) AS id, title FROM people WHERE type = 'User') }
     
-    it "calls solr_rows_to_index_for_query with query" do
-      result = []
-      indexer.should_receive(:solr_rows_to_index_for_query).with(query).and_return(result)
-      indexer.index_query(query)
-    end
-    
-    it "calls index_with_json_file when rows > max_rows_to_direct_index" do
-      indexer.max_rows_to_direct_index = 0
+    it "calls index_rows with result of query" do
       rows = [to_index]
       indexer.should_receive(:query_db).with(query).and_return rows
-      indexer.should_receive(:index_with_json_file).with(rows)
+      indexer.should_receive(:index_rows).with(rows)
       indexer.index_query(query)
     end
+  end
+  
+  describe "#index_with_json_file" do
+    let(:rows) { [{ "b" => 2 }, { "a" => 1 }] }
     
-    it "calls index_directly with rows when rows = max_rows_to_direct_index" do
-      indexer.max_rows_to_direct_index = 1
-      rows = [to_index]
-      indexer.should_receive(:query_db).with(query).and_return rows
-      indexer.should_receive(:index_directly).with(rows)
-      indexer.index_query(query)
+    it "calls write_to_file on all rows" do
+      indexer.should_receive(:write_to_file).with(rows.first)
+      indexer.should_receive(:write_to_file).with(rows.at(1))
+      indexer.stub!(:finish)
+      indexer.index_with_json_file(rows)
     end
-    
-    describe "with number of rows > max_rows_to_direct_index" do
-      before(:each) do
-        indexer.max_rows_to_direct_index = 0
-      end
-      
-      it "calls max_rows_to_direct_index" do
-        indexer.should_receive(:max_rows_to_direct_index).and_return 0
-        indexer.index_query(query)
-      end
-      
-      it "executes the query" do
-        indexer.should_receive(:query_db).with(query).and_return [to_index]
-        indexer.index_query(query)
-      end
 
-      it "calls write_to_file on all rows" do
-        rows = [{ "b" => 2 }, { "a" => 1 }]
-        indexer.stub(:query_db).and_return rows
-        indexer.should_receive(:write_to_file).with(rows.first)
-        indexer.should_receive(:write_to_file).with(rows.at(1))
-        indexer.stub!(:finish)
-        indexer.index_query(query)
-      end
-
-      it "calls finish" do
-        indexer.should_receive(:finish)
-        indexer.index_query(query)
-      end
+    it "calls finish" do
+      indexer.should_receive(:finish)
+      indexer.index_with_json_file(rows)
     end
   end
   
@@ -434,18 +447,25 @@ describe Supernova::SolrIndexer do
       
       it "writes the opening brackets and the first line" do
         file_stub.should_receive(:puts).with("\{")
-        file_stub.should_receive(:print).with("\"add\":{\"doc\":{\"title\":\"Some Title\",\"id\":1}}")
+        file_stub.should_receive(:print).with do |str|
+          str.should include("add")
+          str.should include("\"title\":\"Some Title\"")
+          str.should include("\"id\":1")
+        end
         indexer.write_to_file(to_index)
       end
       
       it "only write fields which are not null" do
-        file_stub.should_receive(:print).with("\"add\":{\"doc\":{\"title\":\"Some Title\",\"id\":1}}")
+        file_stub.stub(:print)
+        file_stub.should_not_receive(:print).with do |str|
+          str.include?("text")
+        end
         indexer.write_to_file(to_index.merge(:text => nil))
       end
       
       it "separates the first and the second line" do
         file_stub.should_receive(:puts).with("\{")
-        file_stub.should_receive(:print).with("\"add\":{\"doc\":{\"title\":\"Some Title\",\"id\":1}}")
+        file_stub.should_receive(:print).with(/\"add\":{\"doc\"/)
         file_stub.should_receive(:print).with(%(,\n"add":{"doc":{"id":2}}))
         indexer.write_to_file(to_index)
         indexer.write_to_file({:id => 2})
