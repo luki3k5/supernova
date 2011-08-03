@@ -313,10 +313,18 @@ describe Supernova::SolrIndexer do
       clazz.new.map_hash_keys_to_solr({})["type"].should == "Offer"
     end
     
-    it "uses the table_name as prefix for ids" do
+    it "adds the table_name as prefix for id" do
       clazz = Class.new(Supernova::SolrIndexer)
-      clazz.table_name :people
-      clazz.new.map_hash_keys_to_solr({ "id" => 88 })["id_s"].should == "people/88"
+      index = clazz.new
+      index.stub(:table_name).and_return "people"
+      index.map_hash_keys_to_solr({ "id" => 88 })["id"].should == "people/88"
+    end
+    
+    it "sets the record id when table is set" do
+      clazz = Class.new(Supernova::SolrIndexer)
+      index = clazz.new
+      index.stub(:table_name).and_return "people"
+      index.map_hash_keys_to_solr({ "id" => 88 })["record_id_i"].should == 88
     end
     
     it "adds the sets the cla" do
