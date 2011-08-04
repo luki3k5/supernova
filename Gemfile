@@ -9,10 +9,10 @@ source "http://rubygems.org"
 gem "rsolr"
 gem "will_paginate"
 gem "json"
-gem "i18n"
 gem "activesupport"
 
 group :development do
+  gem "i18n"
   gem 'activerecord', '~>3.0.7', :require => "active_record"
   gem "ruby-debug"
   gem "mysql2", "~> 0.2.7"
