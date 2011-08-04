@@ -82,7 +82,6 @@ describe Supernova::SolrCriteria do
       end
     end
     
-    
     it "sets search correct search query" do
       criteria.search("some query").to_params[:q].should == "(some query)"
     end
@@ -102,6 +101,16 @@ describe Supernova::SolrCriteria do
     
     it "sets the correct select filters when present" do
       criteria.select(:user_id).select(:user_id).select(:enabled).to_params[:fl].should == "user_id,enabled,id"
+    end
+    
+    it "sets the correct facet options when set" do
+      params = criteria.facet_fields(:name).to_params
+      params[:facet].should == true
+    end
+    
+    it "sets all facet fields" do
+      params = criteria.facet_fields(:name).facet_fields(:title).to_params
+      params["facet.field"].should == ["name", "title"]
     end
     
     it "uses mapped fields for select" do
@@ -196,6 +205,10 @@ describe Supernova::SolrCriteria do
       rsolr.stub!(:post).and_return solr_response
     end
     
+    it "sets the original response" do
+      criteria.execute.original_response.should == solr_response
+    end
+    
     it "calls to_params" do
       criteria.should_receive(:to_params).and_return params
       criteria.execute
@@ -240,12 +253,36 @@ describe Supernova::SolrCriteria do
     end
     
     it "calls replace on collection wit returned docs" do
-      col = double("collection")
+      col = double("collection", :original_response= => true, :facets= => true)
       Supernova::Collection.stub!(:new).and_return col
       built_docs = double("built docs")
       criteria.stub!(:build_docs).and_return built_docs
       col.should_receive(:replace).with(built_docs)
       criteria.execute
+    end
+    
+    it "sets the correct facets" do
+      rsolr.stub!(:post).and_return facet_response
+      criteria.should_receive(:hashify_facets_from_response).with(facet_response).and_return({ :a => 1 })
+      criteria.execute.facets.should == {:a => 1}
+    end
+  end
+  
+  let(:facet_response) {
+    {
+      "response"=>{"start"=>0, "docs"=>[{"popularity_i"=>10, "enabled_b"=>false, "id"=>"offers/1", "user_id_i"=>1, "text_t"=>"Hans Meyer", "type"=>"Offer", "location_p"=>"47,11"}, {"popularity_i"=>1, "enabled_b"=>true, "id"=>"offers/2", "user_id_i"=>2, "text_t"=>"Marek Mintal", "type"=>"Offer", "location_p"=>"46.9981112912042,11.6587158814378"}], "numFound"=>2}, "facet_counts"=>{"facet_fields"=>{"text_t"=>["han", 1, "marek", 1, "meyer", 1, "mintal", 1]}, "facet_ranges"=>{}, "facet_dates"=>{}, "facet_queries"=>{}}, "responseHeader"=>{"QTime"=>4, "params"=>{"fq"=>"type:Offer", "facet.field"=>"text_t", "facet"=>"true", "q"=>"*:*", "wt"=>"ruby"}, "status"=>0}
+    }
+  }
+  
+  describe "#hashify_facets_from_response" do
+    it "returns nil when nothing found" do
+      criteria.hashify_facets_from_response({}).should == nil
+    end
+    
+    it "returns the correct hash when facets returned" do
+      criteria.hashify_facets_from_response(facet_response).should == {
+        "text_t" => { "han" => 1, "marek" => 1, "meyer" => 1, "mintal" => 1 }
+      }
     end
   end
   

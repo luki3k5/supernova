@@ -240,4 +240,31 @@ describe "Solr" do
       results.first.should == { "id" => "offers/1", "user_id_i" => 1 }
     end
   end
+  
+  describe "#facets" do
+    it "returns the correct facets hash" do
+      # pending "fix me"
+      Supernova::Solr.connection.add(:id => "offers/3", :type => "Offer", :user_id_i => 3, :enabled_b => false, 
+        :text_t => "Hans Müller", :popularity_i => 10, :type => "Offer"
+      )
+      Supernova::Solr.connection.commit
+      new_criteria.facet_fields(:text_t).execute.facets.should == {"text_t"=>{"mintal"=>1, "marek"=>1, "meyer"=>1, "m\303\274ller"=>1, "han"=>2}}
+    end
+  end
+  
+  describe "with mapping" do
+    before(:each) do
+      @clazz = Class.new(Supernova::SolrIndexer)
+      @clazz.has :location, :type => :string
+      @clazz.has :city, :type => :string
+    end
+    
+    it "returns the correct facets" do
+      row1 = { "id" => 1, "location" => "Hamburg", "type" => "Offer" }
+      row2 = { "id" => 2, "location" => "Hamburg", "type" => "Offer" }
+      row3 = { "id" => 3, "location" => "Berlin", "type" => "Offer" }
+      @clazz.new.index_rows([row1, row2, row3])
+      @clazz.facet_fields(:location).execute.facets.should == { :location=>{ "Berlin"=>1, "Hamburg"=>2 } }
+    end
+  end
 end

@@ -29,7 +29,8 @@ describe "Supernova::Criteria" do
     [:near, "test"],
     [:within, 10],
     [:options, {}],
-    [:without, {}]
+    [:without, {}],
+    [:facet_fields, "name"]
   ].each do |args|
     it "returns the scope itself for #{args.first}" do
       scope.send(*args).should == scope
@@ -40,6 +41,12 @@ describe "Supernova::Criteria" do
       Supernova::Criteria.should_receive(:new).and_return scope_double
       scope_double.should_receive(args.first).with(*args[1..-1])
       Supernova::Criteria.send(*args)
+    end
+  end
+  
+  describe "#facet_fields" do
+    it "sets the facets" do
+      scope.facet_fields("title").facet_fields("name", "first_name").search_options[:facets].should == %w(title name first_name)
     end
   end
   

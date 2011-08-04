@@ -69,6 +69,10 @@ class Supernova::Criteria
   def select(*fields)
     merge_filters_array :select, fields
   end
+  
+  def facet_fields(*fields)
+    merge_filters_array :facets, fields
+  end
 
   def conditions(filters)
     merge_filters :conditions, filters

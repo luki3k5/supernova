@@ -27,6 +27,11 @@ class Supernova::SolrCriteria < Supernova::Criteria
     end
     solr_options[:fq] << "type:#{self.clazz}" if self.clazz
     
+    if self.search_options[:facets]
+      solr_options[:facet] = true
+      solr_options["facet.field"] = self.search_options[:facets].compact.map { |field| solr_field_from_field(field) }
+    end
+    
     if self.search_options[:pagination]
       solr_options[:rows] = per_page
       solr_options[:start] = (current_page - 1) * solr_options[:rows]
@@ -142,9 +147,20 @@ class Supernova::SolrCriteria < Supernova::Criteria
     end
   end
   
+  def hashify_facets_from_response(response)
+    if response["facet_counts"] && response["facet_counts"]["facet_fields"]
+      response["facet_counts"]["facet_fields"].inject({}) do |hash, (key, values)|
+        hash[reverse_lookup_solr_field(key)] = Hash[*values]
+        hash
+      end
+    end
+  end
+  
   def execute
     response = Supernova::Solr.connection.post("select", :data => to_params)
     collection = Supernova::Collection.new(current_page, per_page, response["response"]["numFound"])
+    collection.original_response = response
+    collection.facets = hashify_facets_from_response(response)
     collection.replace(build_docs(response["response"]["docs"]))
     collection
   end
