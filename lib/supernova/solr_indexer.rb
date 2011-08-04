@@ -116,8 +116,11 @@ class Supernova::SolrIndexer
   
   def map_hash_keys_to_solr(hash)
     @indexed_at ||= Time.now.utc.iso8601.to_s
+    if hash["id"] && self.table_name
+      hash["record_id_i"] = hash["id"]
+      hash["id"] = [self.table_name, hash["id"]].compact.join("/") 
+    end
     hash["indexed_at_dt"] = @indexed_at
-    hash["id_s"] = [self.class.table_name, hash["id"]].compact.join("/") if hash["id"]
     self.class.field_definitions.each do |field, options|
       if hash.has_key?(field.to_s)
         value = hash.delete(field.to_s)

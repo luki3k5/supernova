@@ -1,0 +1,3 @@
+- mapping dynamic to static fields in load_document?
+- set solr_row in load_document
+- save type in type_s unless otherwise configured
