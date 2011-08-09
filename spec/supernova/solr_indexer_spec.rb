@@ -800,6 +800,12 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  describe "#suffix_from_type" do
+    it "returns the correct field for string_array" do
+      Supernova::SolrIndexer.suffix_from_type(:string_array).should == :ms
+    end
+  end
+  
   describe "#solr_field_for_field_name_and_mapping" do
     let(:mapping) do 
       { 
