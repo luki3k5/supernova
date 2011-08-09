@@ -66,14 +66,16 @@ class Supernova::SolrCriteria < Supernova::Criteria
     if with.blank?
       []
     else
-      with.map do |key_or_condition, value|
-        if key_or_condition.respond_to?(:solr_filter_for)
-          key_or_condition.key = solr_field_from_field(key_or_condition.key)
-          key_or_condition.solr_filter_for(value)
-        else
-          fq_filter_for_key_and_value(solr_field_from_field(key_or_condition), value)
+      with.map do |key_or_condition, values|
+        [values].flatten.map do |value|
+          if key_or_condition.respond_to?(:solr_filter_for)
+            key_or_condition.key = solr_field_from_field(key_or_condition.key)
+            key_or_condition.solr_filter_for(value)
+          else
+            fq_filter_for_key_and_value(solr_field_from_field(key_or_condition), value)
+          end
         end
-      end
+      end.flatten
     end
   end
   

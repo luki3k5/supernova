@@ -177,6 +177,10 @@ describe Supernova::SolrCriteria do
         criteria.attribute_mapping(:artist_name => { :type => :string }).where(:artist_name => "test").to_params[:fq].should == ["artist_name_s:test"]
       end
       
+      it "accepts arrays as filters in where" do
+        criteria.attribute_mapping(:artist_name => { :type => :string }).where(:artist_name => %w(hans maulwurf)).to_params[:fq].should == ["artist_name_s:hans", "artist_name_s:maulwurf"]
+      end
+      
       it "uses the mapped fields for all criteria queries" do
         criteria.attribute_mapping(:artist_name => { :type => :string }).where(:artist_name.ne => nil).to_params[:fq].should == ["artist_name_s:[* TO *]"]
       end
