@@ -67,7 +67,7 @@ class Supernova::SolrCriteria < Supernova::Criteria
       []
     else
       with.map do |key_or_condition, values|
-        [values].flatten.map do |value|
+        values_from_key_or_condition_and_values(key_or_condition, values).map do |value|
           if key_or_condition.respond_to?(:solr_filter_for)
             key_or_condition.key = solr_field_from_field(key_or_condition.key)
             key_or_condition.solr_filter_for(value)
@@ -76,6 +76,14 @@ class Supernova::SolrCriteria < Supernova::Criteria
           end
         end
       end.flatten
+    end
+  end
+  
+  def values_from_key_or_condition_and_values(key_or_condition, values)
+    if key_or_condition.is_a?(Supernova::Condition) && values.is_a?(Array) && [:nin, :in].include?(key_or_condition.type)
+      [values]
+    else
+      [values].flatten
     end
   end
   

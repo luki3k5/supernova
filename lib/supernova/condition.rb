@@ -22,6 +22,14 @@ class Supernova::Condition
         "#{self.key}:{* TO #{value}}"
       when :lte
         "#{self.key}:[* TO #{value}]"
+      when :nin
+        "!(#{or_key_and_value(key, value)})"
+      when :in
+        or_key_and_value(key, value)
     end
+  end
+  
+  def or_key_and_value(key, values)
+    values.map { |v| "#{key}:#{v}"}.join(" OR ")
   end
 end

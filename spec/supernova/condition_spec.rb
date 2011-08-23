@@ -16,6 +16,14 @@ describe "Supernova::Condition" do
       :user_id.ne.solr_filter_for(7).should == "!user_id:7"
     end
     
+    it "returns the correct filter for nin" do
+      :user_id.nin.solr_filter_for([1, 2, 3]).should == "!(user_id:1 OR user_id:2 OR user_id:3)"
+    end
+    
+    it "returns the correct filter for nin" do
+      :user_id.in.solr_filter_for([1, 2, 3]).should == "user_id:1 OR user_id:2 OR user_id:3"
+    end
+    
     it "returns the correct filter for not nil" do
       :user_id.not.solr_filter_for(nil).should == "user_id:[* TO *]"
     end

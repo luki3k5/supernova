@@ -501,7 +501,7 @@ describe Supernova::SolrIndexer do
       
       it "separates the first and the second line" do
         file_stub.should_receive(:puts).with("\{")
-        file_stub.should_receive(:print).with(/\"add\":{\"doc\"/)
+        file_stub.should_receive(:print).with(/\"add\":\{\"doc\"/)
         file_stub.should_receive(:print).with(%(,\n"add":{"doc":{"id":2}}))
         indexer.write_to_file(to_index)
         indexer.write_to_file({:id => 2})

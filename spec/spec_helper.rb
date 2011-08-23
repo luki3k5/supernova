@@ -8,7 +8,10 @@ require "fileutils"
 require "ruby-debug"
 require "geokit"
 require "active_record"
-PROJECT_ROOT = Pathname.new(File.expand_path("..", File.dirname(__FILE__)))
+
+def project_root
+  Pathname.new(File.expand_path("..", File.dirname(__FILE__)))
+end
 
 if defined?(Debugger) && Debugger.respond_to?(:settings)
   Debugger.settings[:autolist] = 1
@@ -35,7 +38,7 @@ ActiveRecord::Base.establish_connection(
 )
 
 
-FileUtils.mkdir_p(PROJECT_ROOT.join("log"))
+FileUtils.mkdir_p(project_root.join("log"))
 
 ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS offers")
 ActiveRecord::Base.connection.execute("CREATE TABLE offers (id SERIAL, text TEXT, user_id INTEGER, enabled BOOLEAN, popularity INTEGER, lat FLOAT, lng FLOAT)")

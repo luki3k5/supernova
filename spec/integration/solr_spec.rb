@@ -266,5 +266,27 @@ describe "Solr" do
       @clazz.new.index_rows([row1, row2, row3])
       @clazz.facet_fields(:location).execute.facets.should == { :location=>{ "Berlin"=>1, "Hamburg"=>2 } }
     end
+    
+    describe "#nin and in" do
+      before(:each) do
+        row1 = { "id" => 1, "location" => "Hamburg", "type" => "Offer" }
+        row2 = { "id" => 2, "location" => "Hamburg", "type" => "Offer" }
+        row3 = { "id" => 3, "location" => "Berlin", "type" => "Offer" }
+        row4 = { "id" => 4, "location" => "München", "type" => "Offer" }
+        Supernova::Solr.truncate!
+        Supernova::Solr.connection.commit
+        @clazz.new.index_rows([row1, row2, row3, row4])
+      end
+      
+      it "correctly handels nin searches" do
+        @clazz.with(:location.in => %w(Hamburg)).execute.map(&:id).should == [1, 2]
+        @clazz.with(:location.in => %w(Hamburg Berlin)).execute.map(&:id).should == [1, 2, 3]
+      end
+      
+      it "correctly handels nin queries" do
+        @clazz.with(:location.nin => %w(Hamburg)).execute.map(&:id).should == [3, 4]
+        @clazz.with(:location.nin => %w(Hamburg Berlin)).execute.map(&:id).should == [4]
+      end
+    end
   end
 end

@@ -25,6 +25,14 @@ describe Supernova::SolrCriteria do
       criteria.fq_from_with(:user_id => Range.new(10, 12)).should == ["user_id:[10 TO 12]"]
     end
     
+    it "returns the correct filter for nin" do
+      criteria.fq_from_with(:user_id.nin => [1, 2]).should == ["!(user_id:1 OR user_id:2)"]
+    end
+    
+    it "returns the correct filter for in" do
+      criteria.fq_from_with(:user_id.in => [1, 2]).should == ["user_id:1 OR user_id:2"]
+    end
+    
     it "returns the correct filter for not queries" do
       criteria.fq_from_with(:user_id.not => nil).should == ["user_id:[* TO *]"]
     end
