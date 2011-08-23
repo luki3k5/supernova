@@ -10,26 +10,34 @@ class Supernova::Condition
     case type
       when :not, :ne
         if value.nil?
-          "#{self.key}:[* TO *]"
+          nil_filter
         else
-          "!#{self.key}:#{value}"
+          "!#{key}:#{value}"
         end
       when :gt
-        "#{self.key}:{#{value} TO *}"
+        "#{key}:{#{value} TO *}"
       when :gte
-        "#{self.key}:[#{value} TO *]"
+        "#{key}:[#{value} TO *]"
       when :lt
-        "#{self.key}:{* TO #{value}}"
+        "#{key}:{* TO #{value}}"
       when :lte
-        "#{self.key}:[* TO #{value}]"
+        "#{key}:[* TO #{value}]"
       when :nin
-        "!(#{or_key_and_value(key, value)})"
+        value.is_a?(Range) ? "#{key}:{* TO #{value.first}} OR #{key}:{#{value.last} TO *}" : "!(#{or_key_and_value(value)})"
       when :in
-        or_key_and_value(key, value)
+        or_key_and_value(value)
     end
   end
   
-  def or_key_and_value(key, values)
-    values.map { |v| "#{key}:#{v}"}.join(" OR ")
+  def nil_filter
+    "#{key}:[* TO *]"
+  end
+  
+  def or_key_and_value(values)
+    if values.is_a?(Range)
+      "#{key}:[#{values.first} TO #{values.last}]"
+    else
+      values.map { |v| v.nil? ? "!#{nil_filter}" : "#{key}:#{v}"}.join(" OR ")
+    end
   end
 end
