@@ -252,6 +252,15 @@ describe "Solr" do
     end
   end
   
+  describe "#ids" do
+    it "only returns the ids in a collection" do
+      result = new_criteria.ids
+      result.should be_kind_of(Supernova::Collection)
+      result.should == [1, 2]
+      result.total_entries.should == 2
+    end
+  end
+  
   describe "with mapping" do
     before(:each) do
       @clazz = Class.new(Supernova::SolrIndexer)

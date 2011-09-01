@@ -174,4 +174,9 @@ class Supernova::SolrCriteria < Supernova::Criteria
     collection.replace(build_docs(response["response"]["docs"]))
     collection
   end
+  
+  def ids
+    select("id")
+    execute.map! { |h| h["id"].split("/").last.to_i }
+  end
 end

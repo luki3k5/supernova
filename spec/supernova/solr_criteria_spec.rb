@@ -208,6 +208,24 @@ describe Supernova::SolrCriteria do
       criteria.attribute_mapping(:artist_name => { :type => :string }).solr_field_from_field(:artist_name).should == "artist_name_s"
     end
   end
+  
+  describe "#ids" do
+    it "sets the select fields to id only" do
+      criteria.should_receive(:select).with("id")
+      criteria.stub!(:execute).and_return([])
+      criteria.ids
+    end
+    
+    it "calls execute" do
+      criteria.should_receive(:execute).and_return([])
+      criteria.ids
+    end
+    
+    it "maps the id hashes to ids" do
+      criteria.stub(:execute).and_return([ { "id" => "offer/1" }, { "id" => "offer/3" } ])
+      criteria.ids
+    end
+  end
 
   describe "#execute" do
     let(:params) { double("params") }
