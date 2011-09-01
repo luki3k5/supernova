@@ -522,8 +522,8 @@ describe Supernova::SolrCriteria do
       criteria.paginate(:page => 3, :per_page => nil).per_page.should == 25
     end
     
-    it "returns 25 when set to 0" do
-      criteria.paginate(:page => 3, :per_page => 0).per_page.should == 25
+    it "returns 0 when set to 0" do
+      criteria.paginate(:page => 3, :per_page => 0).per_page.should == 0
     end
     
     it "returns the custom value when set" do

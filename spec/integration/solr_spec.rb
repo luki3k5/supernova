@@ -259,6 +259,16 @@ describe "Solr" do
       result.should == [1, 2]
       result.total_entries.should == 2
     end
+    
+    it "does include facets" do
+      new_criteria.facet_fields(:enabled_b).ids.facets.should == { "enabled_b" => { "true" => 1, "false" => 1 } }
+    end
+    
+    it "returns 0 rows" do
+      response = new_criteria.rows(0).facet_fields(:enabled_b).ids
+      response.should be_empty
+      response.facets.should == { "enabled_b" => { "true" => 1, "false" => 1 } }
+    end
   end
   
   describe "with mapping" do

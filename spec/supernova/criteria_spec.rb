@@ -102,6 +102,20 @@ describe "Supernova::Criteria" do
     scope.paginate(:page => 9, :per_page => 2).search_options[:pagination].should == { :page => 9, :per_page => 2 }
   end
   
+  it "sets per_page to number of rows when rows specified" do
+    scope.rows(0).search_options[:pagination].should == { :per_page => 0 }
+  end
+  
+  describe "#per_page" do
+    it "allows setting of pagination to 0" do
+      scope.paginate(:per_page => 0).per_page.should == 0
+    end
+    
+    it "" do
+      scope.paginate(:per_page => nil).per_page.should == 25
+    end
+  end
+  
   describe "#without" do
     it "sets the correct without filter" do
       scope.without(:user_id => 1).filters[:without].should == { :user_id => [1] }

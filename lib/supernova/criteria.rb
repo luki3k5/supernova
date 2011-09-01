@@ -82,6 +82,10 @@ class Supernova::Criteria
     merge_search_options :pagination, pagination_options
   end
   
+  def rows(number)
+    merge_search_options :pagination, :per_page => number
+  end
+  
   def near(*coordinates)
     merge_search_options :geo_center, normalize_coordinates(*coordinates)
   end
@@ -166,11 +170,15 @@ class Supernova::Criteria
   end
   
   def per_page
-    pagination_attribute_when_greater_zero(:per_page) || DEFAULT_PER_PAGE
+    ret = self.search_options[:pagination][:per_page] if self.search_options[:pagination]
+    ret = DEFAULT_PER_PAGE if ret.nil?
+    ret
   end
   
   def pagination_attribute_when_greater_zero(attribute)
-    self.search_options[:pagination][attribute] if self.search_options[:pagination] && self.search_options[:pagination][attribute].to_i > 0
+    if self.search_options[:pagination] && self.search_options[:pagination][attribute].to_i > 0
+      self.search_options[:pagination][attribute] 
+    end
   end
 
   def implement_in_subclass
