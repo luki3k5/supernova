@@ -31,6 +31,21 @@ describe "Solr" do
     Offer.search_scope
   end
   
+  describe "#index_with_json_string" do
+    it "indexes the correct rows" do
+      Supernova::Solr.truncate!
+      indexer = Supernova::SolrIndexer.new
+      indexer.index_with_json_string([
+          { :title_s => "Title1", :id => 1, :type => "Record" }, 
+          { :title_s => "Title2", :id => 2, :type => "Record" } 
+        ]
+      )
+      response = Supernova::Solr.connection.get('select', :params => { :q=>'*:*', :start=>0, :rows=>10, :sort => "id asc" })
+      response["response"]["docs"].first.should == { "title_s" => "Title1", "id" => "1", "type" => "Record" }
+      response["response"]["docs"].at(1).should == { "title_s" => "Title2", "id" => "2", "type" => "Record" }
+    end
+  end
+  
   describe "#indexing" do
     before(:each) do
       Supernova::Solr.truncate!
@@ -64,6 +79,7 @@ describe "Solr" do
       offer1 = Offer.create!(:user_id => 1, :popularity => 10)
       offer2 = Offer.create!(:user_id => 2, :popularity => 20)
       indexer = OfferIndex.new(:db => ActiveRecord::Base.connection, :max_rows_to_direct_index => 0)
+      indexer.options[:use_json_file] = true
       indexer.index!
       indexer.instance_variable_get("@index_file_path").should_not be_nil
       OfferIndex.search_scope.total_entries.should == 2
@@ -76,6 +92,7 @@ describe "Solr" do
       offer1 = Offer.create!(:user_id => 1, :popularity => 10)
       offer2 = Offer.create!(:user_id => 2, :popularity => 20)
       indexer = OfferIndex.new(:db => ActiveRecord::Base.connection, :max_rows_to_direct_index => 0, :local_solr => true)
+      indexer.options[:use_json_file] = true
       indexer.index!
       indexer.instance_variable_get("@index_file_path").should_not be_nil
       OfferIndex.search_scope.first.instance_variable_get("@original_search_doc")["indexed_at_dt"].should_not be_nil

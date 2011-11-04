@@ -1,9 +1,10 @@
 require "json"
 require "fileutils"
 require "time"
+require "typhoeus"
 
 class Supernova::SolrIndexer
-  attr_accessor :options, :db, :ids, :max_rows_to_direct_index, :local_solr
+  attr_accessor :options, :db, :ids, :max_rows_to_direct_index, :local_solr, :current_json_string
   attr_writer :index_file_path, :debug
   
   MAX_ROWS_TO_DIRECT_INDEX = 100
@@ -221,13 +222,17 @@ class Supernova::SolrIndexer
     end
     if self.max_rows_to_direct_index < rows.count
       debug "indexed #{rows.length} rows with json in %TIME%" do
-        index_with_json_file(rows)
+        index_with_json(rows)
       end
     else
       debug "indexed #{rows.length} rows directly in %TIME%" do
         index_directly(rows)
       end
     end
+  end
+  
+  def index_with_json(rows)
+    options && options[:use_json_file] ? index_with_json_file(rows) : index_with_json_string(rows)
   end
   
   def solr_rows_to_index_for_query(query)
@@ -255,6 +260,36 @@ class Supernova::SolrIndexer
       end
     end
     finish
+  end
+  
+  def append_to_json_string(row)
+    if self.current_json_string.nil?
+      self.current_json_string = "\{\n"
+    else
+      self.current_json_string << ",\n"
+    end
+    self.current_json_string << %("add":#{{:doc => row}.to_json})
+  end
+  
+  def finalize_json_string
+    self.current_json_string << "\n}"
+  end
+  
+  def post_json_string
+    Typhoeus::Request.post("#{solr_update_url}?commit=true", 
+      :body => self.current_json_string, 
+      :headers => { "Content-type" => "application/json; charset=utf-8" }
+    ).tap do |response|
+      self.current_json_string = nil
+    end
+  end
+  
+  def index_with_json_string(rows)
+    rows.each do |row|
+      append_to_json_string(row)
+    end
+    finalize_json_string
+    post_json_string
   end
   
   def ids_given?
@@ -297,10 +332,14 @@ class Supernova::SolrIndexer
     Supernova::Solr.url.present? ? Supernova::Solr.url.to_s.gsub(/\/$/, "") : nil
   end
   
+  def solr_update_url
+    "#{solr_url}/update/json"
+  end
+  
   def do_index_file(options = {})
     raise "solr not configured" if solr_url.nil?
     cmd = if self.local_solr
-      %(curl -s '#{solr_url}/update/json?commit=true\\&stream.file=#{index_file_path}')
+      %(curl -s '#{solr_update_url}?commit=true\\&stream.file=#{index_file_path}')
     else
       %(cd #{File.dirname(index_file_path)} && curl -s '#{solr_url}/update/json?commit=true' --data-binary @#{File.basename(index_file_path)} -H 'Content-type:application/json')
     end

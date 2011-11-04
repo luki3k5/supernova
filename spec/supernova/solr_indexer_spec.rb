@@ -33,6 +33,72 @@ describe Supernova::SolrIndexer do
     Kernel.stub!(:`).and_return true
   end
   
+  describe "#index_with_json_string" do
+    let(:row1) { double("row1") }
+    let(:row2) { double("row2") }
+    let(:rows) { [row1, row2] }
+    
+    before(:each) do
+      indexer.current_json_string = "{"
+      indexer.stub!(:append_to_json_string)
+    end
+    
+    it "calls append to string with all rows" do
+      indexer.should_receive(:append_to_json_string).with(row1)
+      indexer.should_receive(:append_to_json_string).with(row2)
+      indexer.index_with_json_string(rows)
+    end
+    
+    it "calls finalize_json_string" do
+      indexer.should_receive(:finalize_json_string)
+      indexer.index_with_json_string(rows)
+    end
+    
+    it "calls post_json_string" do
+      indexer.should_receive(:post_json_string)
+      indexer.index_with_json_string(rows)
+    end
+  end
+  
+  describe "#post_json_string" do
+    before(:each) do
+      Typhoeus::Request.stub(:post)
+    end
+    
+    it "posts the json string" do
+      indexer.current_json_string = "some string"
+      Typhoeus::Request.should_receive(:post).with("http://solr.xx:9333/solr/update/json?commit=true", :body => "some string", :headers => { "Content-type" => "application/json; charset=utf-8" }).and_return(double("rsp", :body => "text"))
+      indexer.post_json_string
+    end
+    
+    it "resets the current_json_string" do
+      indexer.current_json_string = "some string"
+      indexer.post_json_string
+      indexer.current_json_string.should be_nil
+    end
+  end
+  
+  describe "#append_to_json_string" do
+    it "creates a new string" do
+      indexer.append_to_json_string({"a" => 1})
+      indexer.current_json_string.should == %({\n"add":{"doc":{"a":1}})
+    end
+    
+    it "appends to the existing string" do
+      indexer.append_to_json_string({"a" => 1})
+      indexer.append_to_json_string({"b" => 2})
+      indexer.current_json_string.should == %({\n"add":{"doc":{"a":1}},\n"add":{"doc":{"b":2}})
+    end
+  end
+  
+  describe "#finalize_json_string" do
+    it "adds the last brackets" do
+      indexer.append_to_json_string({"a" => 1})
+      indexer.finalize_json_string
+      indexer.current_json_string.should == %({\n"add":{"doc":{"a":1}}\n})
+    end
+  end
+  
   describe "initialize" do
     it "sets all options" do
       options = { :database => { :database => "dynasty", :username => "dynasty_user" } }
@@ -375,6 +441,19 @@ describe Supernova::SolrIndexer do
     end
   end
   
+  describe "#index_with_json" do
+    it "calls index_with_json_string by default" do
+      indexer.should_receive(:index_with_json_string).with([1])
+      indexer.index_with_json([1])
+    end
+    
+    it "calls index_with_json_file when asked to" do
+      indexer.options[:use_json_file] = true
+      indexer.should_receive(:index_with_json_file).with([1])
+      indexer.index_with_json([1])
+    end
+  end
+  
   describe "#index_rows" do
     let(:row1) { double("row1") }
     let(:row2) { double("row2") }
@@ -404,7 +483,7 @@ describe Supernova::SolrIndexer do
     
     it "calls map_directly when number of rows < max_rows_to_direct_index" do
       custom_indexer.should_receive(:max_rows_to_direct_index).and_return 1
-      custom_indexer.should_receive(:index_with_json_file).with([mapped1, mapped2])
+      custom_indexer.should_receive(:index_with_json).with([mapped1, mapped2])
       custom_indexer.index_rows([row1, row2])
     end
   end

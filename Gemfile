@@ -10,6 +10,7 @@ gem "rsolr"
 gem "will_paginate"
 gem "json"
 gem "activesupport"
+gem "typhoeus"
 
 group :development do
   gem "i18n"
