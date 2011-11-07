@@ -268,7 +268,7 @@ class Supernova::SolrIndexer
     else
       self.current_json_string << ",\n"
     end
-    self.current_json_string << %("add":#{{:doc => row}.to_json})
+    self.current_json_string << %("add":#{{:doc => row.delete_if { |key, value| value.nil? }}.to_json})
   end
   
   def finalize_json_string

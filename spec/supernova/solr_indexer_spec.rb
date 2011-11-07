@@ -84,6 +84,11 @@ describe Supernova::SolrIndexer do
       indexer.current_json_string.should == %({\n"add":{"doc":{"a":1}})
     end
     
+    it "removes nil values" do
+      indexer.append_to_json_string({"a" => 1, "b" => nil})
+      indexer.current_json_string.should == %({\n"add":{"doc":{"a":1}})
+    end
+    
     it "appends to the existing string" do
       indexer.append_to_json_string({"a" => 1})
       indexer.append_to_json_string({"b" => 2})
